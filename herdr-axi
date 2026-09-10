@@ -1,0 +1,508 @@
+#!/usr/bin/env node
+'use strict';
+// herdr-axi - token-lean control surface over the `herdr` CLI.
+//
+// Deliberately CommonJS with a dynamic import of the ESM lib: an extensionless
+// executable is only auto-detected as ESM on Node >= 20.19 / 22.7, whereas
+// CommonJS + import() works on every Node that has ESM at all.
+//
+// Contract (Agent Experience Interface, AXI):
+//   stdout carries everything the caller consumes, errors included.
+//   stderr is progress only, and this tool emits none.
+//   exit 0 success (no-ops included), 1 error, 2 usage error.
+
+const fs = require('node:fs');
+const os = require('node:os');
+
+const FLAGS = ['--help'];
+
+const HELP = `herdr-axi - token-lean control surface over herdr
+
+usage:
+  herdr-axi                      home view: workspaces, agents, counts, attention
+  herdr-axi read <target>        agent status + pane content, merged into one call
+  herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
+  herdr-axi doctor               compare live herdr against the fixture this tool expects
+
+flags:
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+
+// Deferred: a `--wait` flag on `read` that blocks until the agent settles,
+// mirroring dispatch's --wait/--no-wait, is out of Phase 4's scope.
+const READ_SOURCES = ['visible', 'recent', 'recent-unwrapped', 'detection'];
+const READ_FLAGS = ['--source', '--lines', '--full', '--via-file', '--help'];
+const DEFAULT_READ_LINES = 120;
+// The larger read used only to run detectAlternateScreen(); a multiple large
+// enough to distinguish a real cap from a short buffer's padding (BASELINE.md
+// scenario 3 used 120 -> 400, bp-09 used 120 -> 480).
+const LARGER_LINES_MULTIPLIER = 4;
+
+// Built as a function, not a module-const like HELP: READ_HELP needs
+// herdr.BODY_CHAR_LIMIT (DRY-9), and `herdr` is only set once main() has
+// imported the ESM lib, unlike DEFAULT_READ_LINES which is local to this file.
+function readHelp() {
+  return `herdr-axi read <target> - agent status + pane content, one call
+
+usage:
+  herdr-axi read <target>
+
+flags:
+  --source {visible,recent,recent-unwrapped,detection}   default recent-unwrapped
+  --lines <N>                    default ${DEFAULT_READ_LINES}
+  --full                         skip the ${herdr.BODY_CHAR_LIMIT}-character body truncation
+  --via-file                     ask the agent to write Markdown to a file, then read it back (mutates)
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+}
+
+const DISPATCH_DIRECTIONS = ['right', 'down'];
+const DISPATCH_FLAGS = ['--kind', '--prompt', '--direction', '--cwd', '--no-wait', '--help'];
+
+function dispatchHelp() {
+  return `herdr-axi dispatch <name> --kind <k> --prompt "<text>" - split, start, prompt, one call
+
+usage:
+  herdr-axi dispatch <name> --kind <k> --prompt "<text>"
+
+flags:
+  --kind <k>                     required; agent kind (claude, codex, gemini, ...)
+  --prompt "<text>"              required; text to prompt the new agent with
+  --direction {right,down}       default: chosen from the caller pane's width
+  --cwd <path>                   default: the caller's cwd
+  --no-wait                      submit the prompt without waiting for it to settle
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+}
+
+function doctorHelp() {
+  return `herdr-axi doctor - compare live herdr's version and API schema against the fixture this tool expects
+
+usage:
+  herdr-axi doctor
+
+flags:
+  --help                         this text
+
+exit: 0 match, 1 mismatch, 2 usage error.
+`;
+}
+
+let herdr = null;
+
+// A downstream that closes early (`herdr-axi | head`) is not this tool's failure.
+process.stdout.on('error', (err) => {
+  if (err && err.code === 'EPIPE') process.exit(0);
+});
+
+// Thrown instead of calling process.exit(), so Node flushes stdout before the
+// process ends. process.exit() after a write to a pipe truncates the output.
+class Exit extends Error {
+  constructor(code) {
+    super(`exit ${code}`);
+    this.exitCode = code;
+  }
+}
+
+// Errors are TOON on stdout, produced by the serializer itself so the payload
+// is always valid TOON the caller can parse.
+function emitError(fields, exitCode) {
+  const body = { error: fields.error, code: fields.code };
+  // name/pane locate a half-started agent from a prompt-stage failure; only
+  // set when the caller already knows them (the agent settled or was started).
+  if (fields.name) body.name = fields.name;
+  if (fields.pane) body.pane = fields.pane;
+  body.help = fields.help || ['Run `herdr-axi --help` for usage'];
+  let text;
+  try {
+    text = herdr.toon.serialize(body);
+  } catch {
+    // Last-resort plain text: never let the reporter itself throw.
+    text = `error: ${fields.error}\ncode: ${fields.code}`;
+  }
+  process.stdout.write(`${text}\n`);
+  throw new Exit(exitCode);
+}
+
+const usageError = (message, code, extra) =>
+  emitError({ error: message, code, ...extra }, 2);
+
+// herdr's own subcommands take --pane <ID>/--target <ID>; this tool's read
+// and dispatch take the same value as a bare positional instead. A caller
+// who reaches for herdr's own flag spelling gets a hint at the mismatch,
+// alongside the Valid flags list, rather than a bare "unknown flag".
+const POSITIONAL_FLAG_CONFUSION = {
+  '--pane': 'this command takes it as a bare positional argument, not --pane',
+  '--target': 'this command takes it as a bare positional argument, not --target',
+};
+
+// The one flag parser every subcommand's parse*Args wrapper calls (DRY-10/
+// DRY-11): it owns --help/-h, unknown-flag rejection (with the near-miss hint
+// above), the missing-value guard, and enum/int validation, in one place.
+// `spec` is a table of { flag, kind: 'boolean'|'value'|'enum'|'int', dest,
+// values?, code?, default?, freeform? }. `positionals` names the
+// bare-positional dest slots, in order, filled as they are encountered.
+// Required-arg presence checks stay with each wrapper, since which args are
+// required differs per command.
+function parseFlags(argv, spec, { positionals = [], validFlags }) {
+  const out = { help: false };
+  for (const d of spec) out[d.dest] = d.default;
+  const positionalValues = [];
+  const helpFields = () => ({ help: [`Valid flags: ${validFlags.join(', ')}`] });
+
+  let i = 0;
+  while (i < argv.length) {
+    const arg = argv[i];
+    // --help/-h wins regardless of what follows it (e.g. a trailing bogus
+    // token), matching the old per-command parsers this replaced.
+    if (arg === '--help' || arg === '-h') {
+      out.help = true;
+      positionals.forEach((dest) => { out[dest] = null; });
+      return out;
+    }
+
+    const d = spec.find((x) => x.flag === arg);
+    if (d) {
+      if (d.kind === 'boolean') { out[d.dest] = true; i++; continue; }
+      // Missing-value guard: a value-taking flag whose next token is absent,
+      // or (for a constrained flag) itself starts with "--" (one flag
+      // swallowing another's value). A freeform flag (--prompt) carries
+      // arbitrary text that may legitimately start with "--", so it only
+      // rejects a truly absent value.
+      const raw = argv[i + 1];
+      const missing = d.freeform ? raw === undefined : (raw === undefined || raw.startsWith('--'));
+      if (missing) {
+        usageError(`${arg} needs a value`, 'missing_flag_value', helpFields());
+      }
+      if (d.kind === 'enum' && !d.values.includes(raw)) {
+        usageError(`${arg} must be one of ${d.values.join(', ')}`, d.code, helpFields());
+      }
+      if (d.kind === 'int') {
+        const value = Number(raw);
+        if (!Number.isInteger(value) || value <= 0) {
+          usageError(`${arg} must be a positive integer`, d.code, helpFields());
+        }
+        out[d.dest] = value; i += 2; continue;
+      }
+      out[d.dest] = raw; i += 2; continue;
+    }
+
+    if (arg.startsWith('--')) {
+      const hint = positionals.length > 0 ? POSITIONAL_FLAG_CONFUSION[arg] : undefined;
+      usageError(`unknown flag ${arg}`, 'unknown_flag', hint
+        ? { help: [hint, ...helpFields().help] }
+        : helpFields());
+    }
+    if (positionalValues.length < positionals.length) { positionalValues.push(arg); i++; continue; }
+    if (positionals.length === 0) {
+      usageError(`unknown flag ${arg}`, 'unknown_flag', helpFields());
+    }
+    usageError(`unexpected argument ${arg}`, 'unknown_flag', helpFields());
+  }
+
+  positionals.forEach((dest, idx) => { out[dest] = positionalValues[idx] ?? null; });
+  return out;
+}
+
+function parseArgs(argv) {
+  const opts = parseFlags(argv, [], { validFlags: FLAGS });
+  return { help: opts.help };
+}
+
+function parseReadArgs(argv) {
+  const spec = [
+    { flag: '--source', kind: 'enum', dest: 'source', values: READ_SOURCES, code: 'bad_source', default: 'recent-unwrapped' },
+    { flag: '--lines', kind: 'int', dest: 'lines', code: 'bad_lines', default: DEFAULT_READ_LINES },
+    { flag: '--full', kind: 'boolean', dest: 'full', default: false },
+    { flag: '--via-file', kind: 'boolean', dest: 'viaFile', default: false },
+  ];
+  const opts = parseFlags(argv, spec, { positionals: ['target'], validFlags: READ_FLAGS });
+  if (!opts.target && !opts.help) {
+    usageError('read requires a target', 'missing_target', { help: ['usage: herdr-axi read <target>'] });
+  }
+  return opts;
+}
+
+function parseDispatchArgs(argv) {
+  const spec = [
+    { flag: '--kind', kind: 'value', dest: 'kind', default: null },
+    // freeform: --prompt carries arbitrary text that may legitimately start
+    // with "--" ("--fix the login bug"); it must not be swallow-guarded like
+    // --kind/--cwd/--direction, which never legitimately start with "--".
+    { flag: '--prompt', kind: 'value', dest: 'prompt', default: null, freeform: true },
+    { flag: '--direction', kind: 'enum', dest: 'direction', values: DISPATCH_DIRECTIONS, code: 'bad_direction', default: null },
+    { flag: '--cwd', kind: 'value', dest: 'cwd', default: undefined },
+    { flag: '--no-wait', kind: 'boolean', dest: 'noWait', default: false },
+  ];
+  const opts = parseFlags(argv, spec, { positionals: ['name'], validFlags: DISPATCH_FLAGS });
+  const cwd = opts.cwd !== undefined ? opts.cwd : process.cwd();
+  const wait = !opts.noWait;
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi dispatch <name> --kind <k> --prompt "<text>"'];
+    if (!opts.name) usageError('dispatch requires a name', 'missing_name', { help: usage });
+    if (!opts.kind) usageError('dispatch requires --kind', 'missing_kind', { help: usage });
+    if (!opts.prompt) usageError('dispatch requires --prompt', 'missing_prompt', { help: usage });
+  }
+  return { name: opts.name, kind: opts.kind, prompt: opts.prompt, direction: opts.direction, cwd, wait, help: opts.help };
+}
+
+function parseDoctorArgs(argv) {
+  return parseFlags(argv, [], { validFlags: ['--help'] });
+}
+
+// Reports through emitError() with a HerdrAxiError, or throws the original
+// error for main()'s catch-all to convert to an internal-failure report.
+// extra carries fields (e.g. name/pane) known at the call site but not on the
+// error itself.
+function reportOrRethrow(err, extra = {}) {
+  if (err instanceof herdr.HerdrAxiError) {
+    emitError({ error: err.message, code: err.code, help: err.help, ...extra }, 1);
+  }
+  throw err;
+}
+
+async function handleRead(argv) {
+  const opts = parseReadArgs(argv);
+  if (opts.help) { process.stdout.write(readHelp()); return; }
+
+  let agentEnvelope;
+  try {
+    agentEnvelope = herdr.fetchAgentGet(opts.target);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let agent;
+  try {
+    agent = herdr.unwrapAgentGet(agentEnvelope);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  if (opts.viaFile) {
+    if (agent.agent_status === 'blocked') {
+      emitError({
+        error: `${opts.target} is blocked and cannot honor --via-file`,
+        code: 'via_file_blocked',
+        help: ['Wait for the agent to clear its approval/question dialog, then retry'],
+      }, 1);
+    }
+    let body;
+    try {
+      body = herdr.fetchViaFile(opts.target);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    const text = herdr.renderRead(agentEnvelope, body, { source: opts.source, lines: opts.lines, full: opts.full });
+    process.stdout.write(`${text}\n`);
+    return;
+  }
+
+  const largerLines = opts.lines * LARGER_LINES_MULTIPLIER;
+  let primaryText, largerText;
+  try {
+    primaryText = herdr.fetchAgentRead(opts.target, { source: opts.source, lines: opts.lines });
+    largerText = herdr.fetchAgentReadLarger(opts.target, { source: opts.source, lines: largerLines });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  const text = herdr.renderRead(agentEnvelope, primaryText, {
+    source: opts.source, lines: opts.lines, full: opts.full, largerText, largerLines,
+  });
+  process.stdout.write(`${text}\n`);
+}
+
+async function handleDispatch(argv) {
+  const opts = parseDispatchArgs(argv);
+  if (opts.help) { process.stdout.write(dispatchHelp()); return; }
+
+  let direction = opts.direction;
+  if (!direction) {
+    const focusedPaneId = process.env.HERDR_PANE_ID;
+    if (!focusedPaneId) {
+      emitError({
+        error: 'HERDR_PANE_ID is not set; pass --direction explicitly',
+        code: 'missing_pane_id',
+        help: ['Run inside a herdr-managed pane, or pass --direction right|down'],
+      }, 1);
+    }
+    let layoutEnvelope;
+    try {
+      layoutEnvelope = herdr.fetchPaneLayout(focusedPaneId);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    let area;
+    try {
+      area = herdr.unwrapPaneLayout(layoutEnvelope);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    direction = herdr.chooseDirection(area);
+  }
+
+  let splitEnvelope;
+  try {
+    splitEnvelope = herdr.fetchPaneSplit({ direction, cwd: opts.cwd });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let pane;
+  try {
+    pane = herdr.unwrapPaneSplit(splitEnvelope).pane_id;
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  try {
+    herdr.startAgentWhenReady({
+      attempt: () => herdr.fetchAgentStart(opts.name, opts.kind, pane),
+      // Sync sleep: a real herdr call blocks the event loop anyway, and this
+      // module is a synchronous CLI, not an async server.
+      sleep: (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms),
+      now: Date.now,
+    });
+  } catch (err) {
+    // The pane already exists at this point (split succeeded); carry it so
+    // a timed-out agent_pane_busy still points the caller at the orphan.
+    reportOrRethrow(err, { pane });
+  }
+
+  let promptEnvelope;
+  try {
+    promptEnvelope = herdr.fetchAgentPrompt(opts.name, opts.prompt, { wait: opts.wait });
+  } catch (err) {
+    // Unlike the start-stage failure above, the agent already exists here;
+    // carry name+pane so the caller can find the half-started agent.
+    reportOrRethrow(err, { name: opts.name, pane });
+  }
+
+  // Best-effort pane read for a blocked settle's headline: a read failure
+  // must never suppress the blocked status itself (dispatch's non-negotiable
+  // rule), so this is isolated from the settle-status determination above.
+  let waitingOn = null;
+  if (opts.wait) {
+    let settledAgent;
+    try {
+      settledAgent = herdr.unwrapAgentGet(promptEnvelope);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    if (settledAgent.agent_status === 'blocked') {
+      try {
+        // A blocked agent is on the alternate screen; 'recent-unwrapped' fails
+        // agent_not_idle ("its alternate-screen history can only be captured
+        // by scrolling while idle", live-confirmed). 'visible' reads the
+        // current screen instead, which the dialog is on.
+        const paneText = herdr.fetchAgentRead(opts.name, { source: 'visible', lines: 40 });
+        waitingOn = herdr.firstMeaningfulLine(paneText);
+      } catch {
+        waitingOn = null;
+      }
+    }
+  }
+
+  let text;
+  try {
+    text = herdr.renderDispatch(splitEnvelope, promptEnvelope, {
+      name: opts.name, kind: opts.kind, direction, wait: opts.wait, waitingOn,
+    });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${text}\n`);
+}
+
+async function handleDoctor(argv) {
+  const opts = parseDoctorArgs(argv);
+  if (opts.help) { process.stdout.write(doctorHelp()); return; }
+
+  let expected;
+  try {
+    expected = herdr.readExpectedVersion();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let version, hash;
+  try {
+    version = herdr.fetchVersion();
+    hash = herdr.fetchSchemaHash();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  const cmp = herdr.compareVersion({ version, hash }, expected);
+  const text = herdr.renderDoctor(cmp, { version });
+  process.stdout.write(`${text}\n`);
+  if (!cmp.match) throw new Exit(1);
+}
+
+async function main() {
+  const lib = await import('./lib/herdr.mjs');
+  const toon = await import('./lib/toon.mjs');
+  herdr = { ...lib, toon };
+
+  if (process.argv[2] === 'read') {
+    await handleRead(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'dispatch') {
+    await handleDispatch(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'doctor') {
+    await handleDoctor(process.argv.slice(3));
+    return;
+  }
+
+  const opts = parseArgs(process.argv.slice(2));
+  if (opts.help) { process.stdout.write(HELP); return; }
+
+  let realPath;
+  try {
+    realPath = fs.realpathSync(process.argv[1]);
+  } catch {
+    realPath = process.argv[1];
+  }
+  const bin = herdr.binPath(realPath, os.homedir());
+
+  let envelope;
+  try {
+    envelope = herdr.fetchSnapshot();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let text;
+  try {
+    text = herdr.renderHome(envelope, { bin });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${text}\n`);
+}
+
+main().catch((err) => {
+  if (err instanceof Exit) {
+    process.exitCode = err.exitCode;
+    return;
+  }
+  // Nothing else should reach here; if it does, it is still a structured
+  // message rather than a stack trace on the caller's stdout.
+  try {
+    emitError({ error: err && err.message ? err.message : 'unexpected failure', code: 'internal' }, 1);
+  } catch (signal) {
+    process.exitCode = signal instanceof Exit ? signal.exitCode : 1;
+  }
+});

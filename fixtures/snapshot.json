@@ -1,0 +1,1611 @@
+{
+  "id": "cli:api:snapshot",
+  "result": {
+    "snapshot": {
+      "agents": [
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "e17e8896-d763-4165-8422-8bac61a8778b"
+          },
+          "agent_status": "working",
+          "cwd": "~/repo-a",
+          "focused": true,
+          "foreground_cwd": "~/repo-a/.claude/worktrees/sunny-spinning-oasis",
+          "pane_id": "w6:p5",
+          "revision": 1334,
+          "state_change_seq": 1764,
+          "tab_id": "w6:t1",
+          "terminal_id": "term_659f196ab6db98",
+          "terminal_title": "alpha",
+          "terminal_title_stripped": "alpha",
+          "workspace_id": "w6"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "1e832e36-2f62-4278-834c-f07729339307"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/repo-b/.claude/worktrees/pure-wiggling-pearl",
+          "pane_id": "w9:pA",
+          "revision": 15,
+          "state_change_seq": 651,
+          "tab_id": "w9:t1",
+          "terminal_id": "term_65a026f8256721b",
+          "terminal_title": "beta",
+          "terminal_title_stripped": "gamma",
+          "workspace_id": "w9"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "26bab304-6811-43ea-b5d3-1cd937ec19ef"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-a",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-a",
+          "pane_id": "wK:p1",
+          "revision": 3968,
+          "state_change_seq": 1486,
+          "tab_id": "wK:t1",
+          "terminal_id": "term_65a8dadc1728f61",
+          "terminal_title": "delta",
+          "terminal_title_stripped": "epsilon",
+          "workspace_id": "wK"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "65994983-bf48-4ac4-8bb6-cb1ae3fb4cef"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-a",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wK:p2",
+          "revision": 91,
+          "state_change_seq": 1395,
+          "tab_id": "wK:t1",
+          "terminal_id": "term_65a9fc1e3f0c266",
+          "terminal_title": "zeta",
+          "terminal_title_stripped": "eta",
+          "workspace_id": "wK"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "776e21ac-5be6-4036-90ce-3aec4f652292"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-c",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-b",
+          "pane_id": "wM:p1",
+          "revision": 2433,
+          "state_change_seq": 1471,
+          "tab_id": "wM:t1",
+          "terminal_id": "term_65a8f310bb81664",
+          "terminal_title": "theta",
+          "terminal_title_stripped": "iota",
+          "workspace_id": "wM"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "be37bec5-1082-4c18-8c6a-91622b215a99"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-d",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-c",
+          "pane_id": "wN:p1",
+          "revision": 1787,
+          "state_change_seq": 1364,
+          "tab_id": "wN:t1",
+          "terminal_id": "term_65a90a36aa01b65",
+          "terminal_title": "kappa",
+          "terminal_title_stripped": "lambda",
+          "workspace_id": "wN"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "55081316-269a-40f4-b2d1-04d2422e035f"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p1",
+          "revision": 846,
+          "state_change_seq": 1594,
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4775a9a0168",
+          "terminal_title": "mu",
+          "terminal_title_stripped": "nu",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "fea1e7a8-3824-421c-a71a-0b002cb555a3"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-d",
+          "pane_id": "wQ:p3",
+          "revision": 354,
+          "state_change_seq": 1525,
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4972d940d6a",
+          "terminal_title": "xi",
+          "terminal_title_stripped": "omicron",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "2df74f0a-e5a8-4f27-b817-bf1ba69bdabf"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-e",
+          "pane_id": "wQ:p4",
+          "revision": 89,
+          "state_change_seq": 1555,
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4c0ed7e316c",
+          "terminal_title": "pi",
+          "terminal_title_stripped": "rho",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "2a4dc50d-2cba-47d9-8555-a813946e67a9"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-f",
+          "pane_id": "wQ:p5",
+          "revision": 293,
+          "state_change_seq": 1567,
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4c147a8136d",
+          "terminal_title": "sigma",
+          "terminal_title_stripped": "tau",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "4028eddb-435e-4414-9e70-2a3dbf26c5fc"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p6",
+          "revision": 1051,
+          "state_change_seq": 1656,
+          "tab_id": "wQ:t3",
+          "terminal_id": "term_65aa5e780e9c472",
+          "terminal_title": "upsilon",
+          "terminal_title_stripped": "phi",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "a10dc73d-47f8-4477-ba98-821c36e5a01e"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-e",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-g",
+          "pane_id": "wS:p1",
+          "revision": 247,
+          "state_change_seq": 1605,
+          "tab_id": "wS:t1",
+          "terminal_id": "term_65aa4daaae4d56e",
+          "terminal_title": "chi",
+          "terminal_title_stripped": "psi",
+          "workspace_id": "wS"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "9fa1bc06-19a8-4624-9315-274748f0219a"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-f",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-h",
+          "pane_id": "wV:p1",
+          "revision": 148,
+          "state_change_seq": 1620,
+          "tab_id": "wV:t1",
+          "terminal_id": "term_65aa51620054570",
+          "terminal_title": "omega",
+          "terminal_title_stripped": "alpha24",
+          "workspace_id": "wV"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "5b6b63d5-c451-41ae-952f-ea5b0ebf8b19"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-g",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-i",
+          "pane_id": "wW:p1",
+          "revision": 84,
+          "state_change_seq": 1657,
+          "tab_id": "wW:t1",
+          "terminal_id": "term_65aa5fa35013d73",
+          "terminal_title": "beta25",
+          "terminal_title_stripped": "gamma26",
+          "workspace_id": "wW"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "60229b6d-68aa-48f8-9762-4c23f5e7a4b4"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-h",
+          "focused": false,
+          "foreground_cwd": "~/dir-h",
+          "pane_id": "wY:p1",
+          "revision": 1914,
+          "state_change_seq": 1698,
+          "tab_id": "wY:t1",
+          "terminal_id": "term_65ab9b4a6920f78",
+          "terminal_title": "delta27",
+          "terminal_title_stripped": "epsilon28",
+          "workspace_id": "wY"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "16d08316-eedf-4df4-9101-c2f9dd9ba14c"
+          },
+          "agent_status": "working",
+          "cwd": "~/dir-i",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "interactive_ready": true,
+          "name": "agent-j",
+          "pane_id": "w0:p1",
+          "revision": 111,
+          "state_change_seq": 1766,
+          "tab_id": "w0:t1",
+          "terminal_id": "term_65ac8bd89cdfb7d",
+          "terminal_title": "zeta29",
+          "terminal_title_stripped": "zeta29",
+          "workspace_id": "w0"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "synthetic-blocked"
+          },
+          "agent_status": "blocked",
+          "cwd": "~/repo-a",
+          "focused": false,
+          "foreground_cwd": "~/repo-a",
+          "pane_id": "wZ:p1",
+          "revision": 1334,
+          "state_change_seq": 1764,
+          "tab_id": "wZ:t1",
+          "terminal_id": "term_synthetic_blocked",
+          "terminal_title": "beta49",
+          "terminal_title_stripped": "beta49",
+          "workspace_id": "wZ",
+          "name": "agent-k"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "synthetic-unknown"
+          },
+          "agent_status": "unknown",
+          "cwd": "~/repo-a",
+          "focused": false,
+          "foreground_cwd": "~/repo-a",
+          "pane_id": "wZ:p2",
+          "revision": 1334,
+          "state_change_seq": 1764,
+          "tab_id": "wZ:t1",
+          "terminal_id": "term_synthetic_unknown",
+          "terminal_title": "gamma50",
+          "terminal_title_stripped": "gamma50",
+          "workspace_id": "wZ",
+          "name": "agent-l"
+        }
+      ],
+      "focused_pane_id": "w6:p5",
+      "focused_tab_id": "w6:t1",
+      "focused_workspace_id": "w6",
+      "layouts": [
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "w6:p5",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "w6:p5",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "w6:t1",
+          "workspace_id": "w6",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "w9:pA",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "w9:pA",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "w9:t1",
+          "workspace_id": "w9",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wK:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wK:p1",
+              "rect": {
+                "height": 65,
+                "width": 117,
+                "x": 36,
+                "y": 1
+              }
+            },
+            {
+              "focused": false,
+              "pane_id": "wK:p2",
+              "rect": {
+                "height": 65,
+                "width": 116,
+                "x": 153,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [
+            {
+              "direction": "right",
+              "id": "split_0_root",
+              "ratio": 0.5,
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "tab_id": "wK:t1",
+          "workspace_id": "wK",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wM:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wM:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wM:t1",
+          "workspace_id": "wM",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wN:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wN:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wN:t1",
+          "workspace_id": "wN",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wQ:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wQ:p1",
+              "rect": {
+                "height": 65,
+                "width": 117,
+                "x": 36,
+                "y": 1
+              }
+            },
+            {
+              "focused": false,
+              "pane_id": "wQ:p3",
+              "rect": {
+                "height": 33,
+                "width": 116,
+                "x": 153,
+                "y": 1
+              }
+            },
+            {
+              "focused": false,
+              "pane_id": "wQ:p4",
+              "rect": {
+                "height": 16,
+                "width": 116,
+                "x": 153,
+                "y": 34
+              }
+            },
+            {
+              "focused": false,
+              "pane_id": "wQ:p5",
+              "rect": {
+                "height": 16,
+                "width": 116,
+                "x": 153,
+                "y": 50
+              }
+            }
+          ],
+          "splits": [
+            {
+              "direction": "right",
+              "id": "split_0_root",
+              "ratio": 0.5,
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            },
+            {
+              "direction": "down",
+              "id": "split_1_1",
+              "ratio": 0.5,
+              "rect": {
+                "height": 65,
+                "width": 116,
+                "x": 153,
+                "y": 1
+              }
+            },
+            {
+              "direction": "down",
+              "id": "split_2_11",
+              "ratio": 0.5,
+              "rect": {
+                "height": 32,
+                "width": 116,
+                "x": 153,
+                "y": 34
+              }
+            }
+          ],
+          "tab_id": "wQ:t1",
+          "workspace_id": "wQ",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wQ:p6",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wQ:p6",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wQ:t3",
+          "workspace_id": "wQ",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wS:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wS:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wS:t1",
+          "workspace_id": "wS",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wV:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wV:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wV:t1",
+          "workspace_id": "wV",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wW:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wW:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wW:t1",
+          "workspace_id": "wW",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wX:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wX:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wX:t1",
+          "workspace_id": "wX",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wY:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wY:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wY:t1",
+          "workspace_id": "wY",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "wY:p2",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "wY:p2",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "wY:t2",
+          "workspace_id": "wY",
+          "zoomed": false
+        },
+        {
+          "area": {
+            "height": 65,
+            "width": 233,
+            "x": 36,
+            "y": 1
+          },
+          "focused_pane_id": "w0:p1",
+          "panes": [
+            {
+              "focused": true,
+              "pane_id": "w0:p1",
+              "rect": {
+                "height": 65,
+                "width": 233,
+                "x": 36,
+                "y": 1
+              }
+            }
+          ],
+          "splits": [],
+          "tab_id": "w0:t1",
+          "workspace_id": "w0",
+          "zoomed": false
+        }
+      ],
+      "panes": [
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "e17e8896-d763-4165-8422-8bac61a8778b"
+          },
+          "agent_status": "working",
+          "cwd": "~/repo-a",
+          "focused": true,
+          "foreground_cwd": "~/repo-a/.claude/worktrees/sunny-spinning-oasis",
+          "pane_id": "w6:p5",
+          "revision": 1334,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "w6:t1",
+          "terminal_id": "term_659f196ab6db98",
+          "terminal_title": "alpha",
+          "terminal_title_stripped": "alpha",
+          "workspace_id": "w6"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "1e832e36-2f62-4278-834c-f07729339307"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/repo-b/.claude/worktrees/pure-wiggling-pearl",
+          "pane_id": "w9:pA",
+          "revision": 15,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "w9:t1",
+          "terminal_id": "term_65a026f8256721b",
+          "terminal_title": "beta",
+          "terminal_title_stripped": "gamma",
+          "workspace_id": "w9"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "26bab304-6811-43ea-b5d3-1cd937ec19ef"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-a",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wK:p1",
+          "revision": 3968,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 63
+          },
+          "tab_id": "wK:t1",
+          "terminal_id": "term_65a8dadc1728f61",
+          "terminal_title": "delta",
+          "terminal_title_stripped": "epsilon",
+          "workspace_id": "wK"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "65994983-bf48-4ac4-8bb6-cb1ae3fb4cef"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-a",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wK:p2",
+          "revision": 91,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 63
+          },
+          "tab_id": "wK:t1",
+          "terminal_id": "term_65a9fc1e3f0c266",
+          "terminal_title": "zeta",
+          "terminal_title_stripped": "eta",
+          "workspace_id": "wK"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "776e21ac-5be6-4036-90ce-3aec4f652292"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-c",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wM:p1",
+          "revision": 2433,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wM:t1",
+          "terminal_id": "term_65a8f310bb81664",
+          "terminal_title": "theta",
+          "terminal_title_stripped": "iota",
+          "workspace_id": "wM"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "be37bec5-1082-4c18-8c6a-91622b215a99"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-d",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wN:p1",
+          "revision": 1787,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wN:t1",
+          "terminal_id": "term_65a90a36aa01b65",
+          "terminal_title": "kappa",
+          "terminal_title_stripped": "lambda",
+          "workspace_id": "wN"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "55081316-269a-40f4-b2d1-04d2422e035f"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p1",
+          "revision": 846,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 63
+          },
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4775a9a0168",
+          "terminal_title": "mu",
+          "terminal_title_stripped": "nu",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "fea1e7a8-3824-421c-a71a-0b002cb555a3"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p3",
+          "revision": 354,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 31
+          },
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4972d940d6a",
+          "terminal_title": "xi",
+          "terminal_title_stripped": "omicron",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "2df74f0a-e5a8-4f27-b817-bf1ba69bdabf"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p4",
+          "revision": 89,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 14
+          },
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4c0ed7e316c",
+          "terminal_title": "pi",
+          "terminal_title_stripped": "rho",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "2a4dc50d-2cba-47d9-8555-a813946e67a9"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p5",
+          "revision": 293,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 14
+          },
+          "tab_id": "wQ:t1",
+          "terminal_id": "term_65aa4c147a8136d",
+          "terminal_title": "sigma",
+          "terminal_title_stripped": "tau",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "4028eddb-435e-4414-9e70-2a3dbf26c5fc"
+          },
+          "agent_status": "idle",
+          "cwd": "~/repo-b",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wQ:p6",
+          "revision": 1051,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wQ:t3",
+          "terminal_id": "term_65aa5e780e9c472",
+          "terminal_title": "upsilon",
+          "terminal_title_stripped": "phi",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "a10dc73d-47f8-4477-ba98-821c36e5a01e"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-e",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wS:p1",
+          "revision": 247,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wS:t1",
+          "terminal_id": "term_65aa4daaae4d56e",
+          "terminal_title": "chi",
+          "terminal_title_stripped": "psi",
+          "workspace_id": "wS"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "9fa1bc06-19a8-4624-9315-274748f0219a"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-f",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wV:p1",
+          "revision": 148,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wV:t1",
+          "terminal_id": "term_65aa51620054570",
+          "terminal_title": "omega",
+          "terminal_title_stripped": "alpha24",
+          "workspace_id": "wV"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "5b6b63d5-c451-41ae-952f-ea5b0ebf8b19"
+          },
+          "agent_status": "done",
+          "cwd": "~/dir-g",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "wW:p1",
+          "revision": 84,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wW:t1",
+          "terminal_id": "term_65aa5fa35013d73",
+          "terminal_title": "beta25",
+          "terminal_title_stripped": "gamma26",
+          "workspace_id": "wW"
+        },
+        {
+          "agent_status": "unknown",
+          "cwd": "~/dir-j",
+          "focused": false,
+          "foreground_cwd": "~/dir-j",
+          "pane_id": "wX:p1",
+          "revision": 1,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wX:t1",
+          "terminal_id": "term_65aa68fd91a0477",
+          "terminal_title": "eta30",
+          "terminal_title_stripped": "eta30",
+          "workspace_id": "wX"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "60229b6d-68aa-48f8-9762-4c23f5e7a4b4"
+          },
+          "agent_status": "idle",
+          "cwd": "~/dir-h",
+          "focused": false,
+          "foreground_cwd": "~/dir-h",
+          "pane_id": "wY:p1",
+          "revision": 1914,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wY:t1",
+          "terminal_id": "term_65ab9b4a6920f78",
+          "terminal_title": "delta27",
+          "terminal_title_stripped": "epsilon28",
+          "workspace_id": "wY"
+        },
+        {
+          "agent_status": "unknown",
+          "cwd": "~/dir-h",
+          "focused": false,
+          "foreground_cwd": "~/dir-h",
+          "pane_id": "wY:p2",
+          "revision": 3,
+          "scroll": {
+            "max_offset_from_bottom": 413,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "wY:t2",
+          "terminal_id": "term_65ab9f7ac0f0b79",
+          "terminal_title": "theta31",
+          "terminal_title_stripped": "theta31",
+          "workspace_id": "wY"
+        },
+        {
+          "agent": "claude",
+          "agent_session": {
+            "agent": "claude",
+            "kind": "id",
+            "source": "herdr:claude",
+            "value": "16d08316-eedf-4df4-9101-c2f9dd9ba14c"
+          },
+          "agent_status": "working",
+          "cwd": "~/dir-i",
+          "focused": false,
+          "foreground_cwd": "~/dir-b",
+          "pane_id": "w0:p1",
+          "revision": 111,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 65
+          },
+          "tab_id": "w0:t1",
+          "terminal_id": "term_65ac8bd89cdfb7d",
+          "terminal_title": "zeta29",
+          "terminal_title_stripped": "zeta29",
+          "workspace_id": "w0"
+        }
+      ],
+      "protocol": 19,
+      "tabs": [
+        {
+          "agent_status": "working",
+          "focused": true,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "w6:t1",
+          "workspace_id": "w6"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "w9:t1",
+          "workspace_id": "w9"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 2,
+          "tab_id": "wK:t1",
+          "workspace_id": "wK"
+        },
+        {
+          "agent_status": "done",
+          "focused": false,
+          "label": "kappa33",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wM:t1",
+          "workspace_id": "wM"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "lambda34",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wN:t1",
+          "workspace_id": "wN"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 4,
+          "tab_id": "wQ:t1",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "mu35",
+          "number": 3,
+          "pane_count": 1,
+          "tab_id": "wQ:t3",
+          "workspace_id": "wQ"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wS:t1",
+          "workspace_id": "wS"
+        },
+        {
+          "agent_status": "done",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wV:t1",
+          "workspace_id": "wV"
+        },
+        {
+          "agent_status": "done",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wW:t1",
+          "workspace_id": "wW"
+        },
+        {
+          "agent_status": "unknown",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wX:t1",
+          "workspace_id": "wX"
+        },
+        {
+          "agent_status": "idle",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "wY:t1",
+          "workspace_id": "wY"
+        },
+        {
+          "agent_status": "unknown",
+          "focused": false,
+          "label": "nu36",
+          "number": 2,
+          "pane_count": 1,
+          "tab_id": "wY:t2",
+          "workspace_id": "wY"
+        },
+        {
+          "agent_status": "working",
+          "focused": false,
+          "label": "iota32",
+          "number": 1,
+          "pane_count": 1,
+          "tab_id": "w0:t1",
+          "workspace_id": "w0"
+        }
+      ],
+      "version": "0.8.0",
+      "workspaces": [
+        {
+          "active_tab_id": "w6:t1",
+          "agent_status": "working",
+          "focused": true,
+          "label": "xi37",
+          "number": 1,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "w6",
+          "worktree": {
+            "checkout_path": "~/repo-a",
+            "is_linked_worktree": false,
+            "repo_key": "~/repo-a/.git",
+            "repo_name": "repo-a",
+            "repo_root": "~/repo-a"
+          }
+        },
+        {
+          "active_tab_id": "w9:t1",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "omicron38",
+          "number": 2,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "w9",
+          "worktree": {
+            "checkout_path": "~/repo-b",
+            "is_linked_worktree": false,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wK:t1",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "pi39",
+          "number": 3,
+          "pane_count": 2,
+          "tab_count": 1,
+          "workspace_id": "wK",
+          "worktree": {
+            "checkout_path": "~/dir-a",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wM:t1",
+          "agent_status": "done",
+          "focused": false,
+          "label": "rho40",
+          "number": 4,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wM",
+          "worktree": {
+            "checkout_path": "~/dir-c",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wN:t1",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "sigma41",
+          "number": 5,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wN",
+          "worktree": {
+            "checkout_path": "~/dir-d",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wQ:t3",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "tau42",
+          "number": 6,
+          "pane_count": 5,
+          "tab_count": 2,
+          "workspace_id": "wQ"
+        },
+        {
+          "active_tab_id": "wS:t1",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "upsilon43",
+          "number": 7,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wS",
+          "worktree": {
+            "checkout_path": "~/dir-e",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wV:t1",
+          "agent_status": "done",
+          "focused": false,
+          "label": "phi44",
+          "number": 8,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wV",
+          "worktree": {
+            "checkout_path": "~/dir-f",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wW:t1",
+          "agent_status": "done",
+          "focused": false,
+          "label": "chi45",
+          "number": 9,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wW",
+          "worktree": {
+            "checkout_path": "~/dir-g",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wX:t1",
+          "agent_status": "unknown",
+          "focused": false,
+          "label": "psi46",
+          "number": 10,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "wX",
+          "worktree": {
+            "checkout_path": "~/dir-j",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-b/.git",
+            "repo_name": "repo-b",
+            "repo_root": "~/repo-b"
+          }
+        },
+        {
+          "active_tab_id": "wY:t2",
+          "agent_status": "idle",
+          "focused": false,
+          "label": "omega47",
+          "number": 11,
+          "pane_count": 2,
+          "tab_count": 2,
+          "workspace_id": "wY"
+        },
+        {
+          "active_tab_id": "w0:t1",
+          "agent_status": "working",
+          "focused": false,
+          "label": "alpha48",
+          "number": 12,
+          "pane_count": 1,
+          "tab_count": 1,
+          "workspace_id": "w0",
+          "worktree": {
+            "checkout_path": "~/dir-i",
+            "is_linked_worktree": true,
+            "repo_key": "~/repo-a/.git",
+            "repo_name": "repo-a",
+            "repo_root": "~/repo-a"
+          }
+        }
+      ]
+    },
+    "type": "session_snapshot"
+  }
+}

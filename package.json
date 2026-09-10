@@ -1,0 +1,12 @@
+{
+  "name": "herdr-axi",
+  "version": "1.0.0",
+  "description": "Token-lean Agent Experience Interface (AXI) over the herdr CLI",
+  "bin": {
+    "herdr-axi": "./herdr-axi"
+  },
+  "scripts": {
+    "test": "node --test lib/*.test.mjs"
+  },
+  "license": "MIT"
+}

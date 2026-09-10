@@ -1,0 +1,40 @@
+bin: ~/.herdr/worktrees/jaygents/herdr-axi-phase-1/tools/herdr-axi
+description: token-lean control surface over herdr 0.8.0
+session: default
+focused: "w6:p5"
+cwd: ~/repo-a
+workspaces[12]{id,label,tabs,panes}:
+  w6,xi37,1,1
+  w9,omicron38,1,1
+  wK,pi39,1,2
+  wM,rho40,1,1
+  wN,sigma41,1,1
+  wQ,tau42,2,5
+  wS,upsilon43,1,1
+  wV,phi44,1,1
+  wW,chi45,1,1
+  wX,psi46,1,1
+  wY,omega47,2,2
+  w0,alpha48,1,1
+agents[18]{name,pane,kind,status,cwd}:
+  "w6:p5","w6:p5",claude,working,~/repo-a
+  "w9:pA","w9:pA",claude,idle,~/repo-b
+  agent-a,"wK:p1",claude,idle,~/dir-a
+  "wK:p2","wK:p2",claude,idle,~/dir-a
+  agent-b,"wM:p1",claude,done,~/dir-c
+  agent-c,"wN:p1",claude,idle,~/dir-d
+  "wQ:p1","wQ:p1",claude,idle,~/repo-b
+  agent-d,"wQ:p3",claude,idle,~/repo-b
+  agent-e,"wQ:p4",claude,idle,~/repo-b
+  agent-f,"wQ:p5",claude,idle,~/repo-b
+  "wQ:p6","wQ:p6",claude,idle,~/repo-b
+  agent-g,"wS:p1",claude,idle,~/dir-e
+  agent-h,"wV:p1",claude,done,~/dir-f
+  agent-i,"wW:p1",claude,done,~/dir-g
+  "wY:p1","wY:p1",claude,idle,~/dir-h
+  agent-j,"w0:p1",claude,working,~/dir-i
+  agent-k,"wZ:p1",claude,blocked,~/repo-a
+  agent-l,"wZ:p2",claude,unknown,~/repo-a
+counts: "18 of 18 agents, 18 panes, 12 workspaces"
+attention[1]: agent-k is blocked at an approval or question dialog
+help[2]: Run `herdr-axi read agent-k --lines 40` to see what agent-k is waiting on,"Run `herdr-axi dispatch <name> --kind claude --prompt \"<text>\"` to start an agent beside you"
