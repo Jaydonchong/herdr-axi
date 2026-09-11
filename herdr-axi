@@ -22,6 +22,7 @@ usage:
   herdr-axi                      home view: workspaces, agents, counts, attention
   herdr-axi read <target>        agent status + pane content, merged into one call
   herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
+  herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
   herdr-axi doctor               compare live herdr against the fixture this tool expects
 
 flags:
@@ -73,6 +74,28 @@ flags:
   --kind <k>                     required; agent kind (claude, codex, gemini, ...)
   --prompt "<text>"              required; text to prompt the new agent with
   --direction {right,down}       default: chosen from the caller pane's width
+  --cwd <path>                   default: the caller's cwd
+  --no-wait                      submit the prompt without waiting for it to settle
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+}
+
+const DISPATCH_WORKSPACE_FLAGS = ['--kind', '--prompt', '--cwd', '--no-wait', '--help'];
+
+// No --direction: a workspace has no split direction to choose, and the
+// unknown-flag rejection in parseFlags refuses it automatically (no special
+// case needed here).
+function dispatchWorkspaceHelp() {
+  return `herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>" - workspace, start, prompt, one call
+
+usage:
+  herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"
+
+flags:
+  --kind <k>                     required; agent kind (claude, codex, gemini, ...)
+  --prompt "<text>"              required; text to prompt the new agent with
   --cwd <path>                   default: the caller's cwd
   --no-wait                      submit the prompt without waiting for it to settle
   --help                         this text
@@ -252,6 +275,27 @@ function parseDispatchArgs(argv) {
   return { name: opts.name, kind: opts.kind, prompt: opts.prompt, direction: opts.direction, cwd, wait, help: opts.help };
 }
 
+function parseDispatchWorkspaceArgs(argv) {
+  const spec = [
+    { flag: '--kind', kind: 'value', dest: 'kind', default: null },
+    // freeform: see parseDispatchArgs's --prompt comment above; the same
+    // arbitrary-text-may-start-with-"--" reasoning applies here.
+    { flag: '--prompt', kind: 'value', dest: 'prompt', default: null, freeform: true },
+    { flag: '--cwd', kind: 'value', dest: 'cwd', default: undefined },
+    { flag: '--no-wait', kind: 'boolean', dest: 'noWait', default: false },
+  ];
+  const opts = parseFlags(argv, spec, { positionals: ['name'], validFlags: DISPATCH_WORKSPACE_FLAGS });
+  const cwd = opts.cwd !== undefined ? opts.cwd : process.cwd();
+  const wait = !opts.noWait;
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"'];
+    if (!opts.name) usageError('dispatch-workspace requires a name', 'missing_name', { help: usage });
+    if (!opts.kind) usageError('dispatch-workspace requires --kind', 'missing_kind', { help: usage });
+    if (!opts.prompt) usageError('dispatch-workspace requires --prompt', 'missing_prompt', { help: usage });
+  }
+  return { name: opts.name, kind: opts.kind, prompt: opts.prompt, cwd, wait, help: opts.help };
+}
+
 function parseDoctorArgs(argv) {
   return parseFlags(argv, [], { validFlags: ['--help'] });
 }
@@ -319,10 +363,11 @@ async function handleRead(argv) {
   process.stdout.write(`${text}\n`);
 }
 
-async function handleDispatch(argv) {
-  const opts = parseDispatchArgs(argv);
-  if (opts.help) { process.stdout.write(dispatchHelp()); return; }
-
+// Acquires the target pane by splitting the caller's own pane (dispatch's
+// scope): resolves --direction (explicit, or chosen from the caller pane's
+// width) then splits. Returns the contract runDispatch shares with
+// acquirePaneViaWorkspace: { pane, direction }.
+function acquirePaneViaSplit(opts) {
   let direction = opts.direction;
   if (!direction) {
     const focusedPaneId = process.env.HERDR_PANE_ID;
@@ -362,6 +407,35 @@ async function handleDispatch(argv) {
     reportOrRethrow(err);
   }
 
+  return { pane, direction };
+}
+
+// Acquires the target pane by creating a workspace (dispatch-workspace's
+// scope): no direction to choose or report, unlike acquirePaneViaSplit.
+function acquirePaneViaWorkspace(opts) {
+  let workspaceEnvelope;
+  try {
+    workspaceEnvelope = herdr.fetchWorkspaceCreate({ cwd: opts.cwd });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let pane;
+  try {
+    pane = herdr.unwrapWorkspaceCreate(workspaceEnvelope).pane_id;
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  return { pane, direction: null };
+}
+
+// Shared by dispatch and dispatch-workspace (DRY-10): they diverge only in
+// how the target pane is acquired (acquirePane), then run the same
+// start-agent/prompt/wait/render pipeline.
+async function runDispatch(opts, acquirePane) {
+  const { pane, direction } = acquirePane(opts);
+
   try {
     herdr.startAgentWhenReady({
       attempt: () => herdr.fetchAgentStart(opts.name, opts.kind, pane),
@@ -371,8 +445,8 @@ async function handleDispatch(argv) {
       now: Date.now,
     });
   } catch (err) {
-    // The pane already exists at this point (split succeeded); carry it so
-    // a timed-out agent_pane_busy still points the caller at the orphan.
+    // The pane already exists at this point (acquisition succeeded); carry
+    // it so a timed-out agent_pane_busy still points the caller at the orphan.
     reportOrRethrow(err, { pane });
   }
 
@@ -412,13 +486,25 @@ async function handleDispatch(argv) {
 
   let text;
   try {
-    text = herdr.renderDispatch(splitEnvelope, promptEnvelope, {
+    text = herdr.renderDispatch(pane, promptEnvelope, {
       name: opts.name, kind: opts.kind, direction, wait: opts.wait, waitingOn,
     });
   } catch (err) {
     reportOrRethrow(err);
   }
   process.stdout.write(`${text}\n`);
+}
+
+async function handleDispatch(argv) {
+  const opts = parseDispatchArgs(argv);
+  if (opts.help) { process.stdout.write(dispatchHelp()); return; }
+  await runDispatch(opts, acquirePaneViaSplit);
+}
+
+async function handleDispatchWorkspace(argv) {
+  const opts = parseDispatchWorkspaceArgs(argv);
+  if (opts.help) { process.stdout.write(dispatchWorkspaceHelp()); return; }
+  await runDispatch(opts, acquirePaneViaWorkspace);
 }
 
 async function handleDoctor(argv) {
@@ -458,6 +544,13 @@ async function main() {
 
   if (process.argv[2] === 'dispatch') {
     await handleDispatch(process.argv.slice(3));
+    return;
+  }
+
+  // A single token, not "dispatch workspace": argv[2] matches it exactly,
+  // same as every other subcommand here.
+  if (process.argv[2] === 'dispatch-workspace') {
+    await handleDispatchWorkspace(process.argv.slice(3));
     return;
   }
 
