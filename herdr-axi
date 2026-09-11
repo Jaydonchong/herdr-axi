@@ -83,7 +83,7 @@ exit: 0 success, 1 error, 2 usage error.
 `;
 }
 
-const DISPATCH_WORKSPACE_FLAGS = ['--kind', '--prompt', '--cwd', '--no-wait', '--help'];
+const DISPATCH_WORKSPACE_FLAGS = ['--kind', '--prompt', '--cwd', '--label', '--no-wait', '--help'];
 
 // No --direction: a workspace has no split direction to choose, and the
 // unknown-flag rejection in parseFlags refuses it automatically (no special
@@ -98,6 +98,7 @@ flags:
   --kind <k>                     required; agent kind (claude, codex, gemini, ...)
   --prompt "<text>"              required; text to prompt the new agent with
   --cwd <path>                   default: the caller's cwd
+  --label <text>                 mixed-case human label for the new workspace, decoupled from <name>
   --no-wait                      submit the prompt without waiting for it to settle
   --help                         this text
 
@@ -288,6 +289,9 @@ function parseDispatchWorkspaceArgs(argv) {
     // arbitrary-text-may-start-with-"--" reasoning applies here.
     { flag: '--prompt', kind: 'value', dest: 'prompt', default: null, freeform: true },
     { flag: '--cwd', kind: 'value', dest: 'cwd', default: undefined },
+    // Not freeform: a label is a short human-facing name, not arbitrary text
+    // like --prompt, so it keeps the standard --xxx-swallow guard.
+    { flag: '--label', kind: 'value', dest: 'label', default: null },
     { flag: '--no-wait', kind: 'boolean', dest: 'noWait', default: false },
   ];
   const opts = parseFlags(argv, spec, { positionals: ['name'], validFlags: DISPATCH_WORKSPACE_FLAGS });
@@ -298,8 +302,9 @@ function parseDispatchWorkspaceArgs(argv) {
     if (!opts.name) usageError('dispatch-workspace requires a name', 'missing_name', { help: usage });
     if (!opts.kind) usageError('dispatch-workspace requires --kind', 'missing_kind', { help: usage });
     if (!opts.prompt) usageError('dispatch-workspace requires --prompt', 'missing_prompt', { help: usage });
+    if (opts.label === '') usageError('dispatch-workspace --label cannot be empty', 'empty_label', { help: usage });
   }
-  return { name: opts.name, kind: opts.kind, prompt: opts.prompt, cwd, wait, help: opts.help };
+  return { name: opts.name, kind: opts.kind, prompt: opts.prompt, cwd, label: opts.label, wait, help: opts.help };
 }
 
 function parseDoctorArgs(argv) {
@@ -417,7 +422,9 @@ function acquirePaneViaSplit(opts) {
 }
 
 // Acquires the target pane by creating a workspace (dispatch-workspace's
-// scope): no direction to choose or report, unlike acquirePaneViaSplit.
+// scope): no direction to choose or report, unlike acquirePaneViaSplit. When
+// opts.label is set, renames the new workspace to it right after creation -
+// the agent name stays lowercase-constrained, the label does not (u2 thesis).
 function acquirePaneViaWorkspace(opts) {
   let workspaceEnvelope;
   try {
@@ -426,11 +433,21 @@ function acquirePaneViaWorkspace(opts) {
     reportOrRethrow(err);
   }
 
-  let pane;
+  let pane, workspaceId;
   try {
-    pane = herdr.unwrapWorkspaceCreate(workspaceEnvelope).pane_id;
+    const { rootPane, workspace } = herdr.unwrapWorkspaceCreate(workspaceEnvelope);
+    pane = rootPane.pane_id;
+    workspaceId = workspace.workspace_id;
   } catch (err) {
     reportOrRethrow(err);
+  }
+
+  if (opts.label) {
+    try {
+      herdr.fetchWorkspaceRename(workspaceId, opts.label);
+    } catch (err) {
+      reportOrRethrow(err, { pane });
+    }
   }
 
   return { pane, direction: null };
