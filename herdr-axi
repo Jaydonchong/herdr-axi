@@ -62,7 +62,7 @@ exit: 0 success, 1 error, 2 usage error.
 }
 
 const DISPATCH_DIRECTIONS = ['right', 'down'];
-const DISPATCH_FLAGS = ['--kind', '--prompt', '--direction', '--cwd', '--no-wait', '--help'];
+const DISPATCH_FLAGS = ['--kind', '--prompt', '--direction', '--cwd', '--workspace', '--no-wait', '--help'];
 
 function dispatchHelp() {
   return `herdr-axi dispatch <name> --kind <k> --prompt "<text>" - split, start, prompt, one call
@@ -73,8 +73,9 @@ usage:
 flags:
   --kind <k>                     required; agent kind (claude, codex, gemini, ...)
   --prompt "<text>"              required; text to prompt the new agent with
-  --direction {right,down}       default: chosen from the caller pane's width
+  --direction {right,down}       default: chosen from the width of the pane being split
   --cwd <path>                   default: the caller's cwd
+  --workspace <id>               split into this existing workspace's active pane, not your own
   --no-wait                      submit the prompt without waiting for it to settle
   --help                         this text
 
@@ -261,6 +262,7 @@ function parseDispatchArgs(argv) {
     { flag: '--prompt', kind: 'value', dest: 'prompt', default: null, freeform: true },
     { flag: '--direction', kind: 'enum', dest: 'direction', values: DISPATCH_DIRECTIONS, code: 'bad_direction', default: null },
     { flag: '--cwd', kind: 'value', dest: 'cwd', default: undefined },
+    { flag: '--workspace', kind: 'value', dest: 'workspace', default: null },
     { flag: '--no-wait', kind: 'boolean', dest: 'noWait', default: false },
   ];
   const opts = parseFlags(argv, spec, { positionals: ['name'], validFlags: DISPATCH_FLAGS });
@@ -271,8 +273,12 @@ function parseDispatchArgs(argv) {
     if (!opts.name) usageError('dispatch requires a name', 'missing_name', { help: usage });
     if (!opts.kind) usageError('dispatch requires --kind', 'missing_kind', { help: usage });
     if (!opts.prompt) usageError('dispatch requires --prompt', 'missing_prompt', { help: usage });
+    if (opts.workspace === '') usageError('dispatch --workspace cannot be empty', 'empty_workspace', { help: usage });
   }
-  return { name: opts.name, kind: opts.kind, prompt: opts.prompt, direction: opts.direction, cwd, wait, help: opts.help };
+  return {
+    name: opts.name, kind: opts.kind, prompt: opts.prompt, direction: opts.direction,
+    cwd, workspace: opts.workspace, wait, help: opts.help,
+  };
 }
 
 function parseDispatchWorkspaceArgs(argv) {
@@ -430,6 +436,80 @@ function acquirePaneViaWorkspace(opts) {
   return { pane, direction: null };
 }
 
+// Acquires the target pane by splitting an EXISTING workspace's active-tab
+// pane (dispatch --workspace's scope), unlike acquirePaneViaSplit (the
+// caller's own pane) or acquirePaneViaWorkspace (a brand-new workspace).
+// Resolves --direction, when not given explicitly, from the RESOLVED TARGET
+// pane's own layout rather than the caller's HERDR_PANE_ID pane: the target
+// pane's width governs the split it is about to receive, not the caller's.
+function acquirePaneViaWorkspaceSplit(opts) {
+  let workspaceEnvelope;
+  try {
+    workspaceEnvelope = herdr.fetchWorkspaceGet(opts.workspace);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  let workspace;
+  try {
+    workspace = herdr.unwrapWorkspaceGet(workspaceEnvelope);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let paneListEnvelope;
+  try {
+    paneListEnvelope = herdr.fetchPaneList({ workspace: workspace.workspace_id });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  let panes;
+  try {
+    panes = herdr.unwrapPaneList(paneListEnvelope);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let targetPaneId;
+  try {
+    targetPaneId = herdr.pickActivePane(panes, workspace.active_tab_id);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let direction = opts.direction;
+  if (!direction) {
+    let layoutEnvelope;
+    try {
+      layoutEnvelope = herdr.fetchPaneLayout(targetPaneId);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    let area;
+    try {
+      area = herdr.unwrapPaneLayout(layoutEnvelope);
+    } catch (err) {
+      reportOrRethrow(err);
+    }
+    direction = herdr.chooseDirection(area);
+  }
+
+  let splitEnvelope;
+  try {
+    splitEnvelope = herdr.fetchPaneSplit({ direction, cwd: opts.cwd, pane: targetPaneId });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  let pane;
+  try {
+    pane = herdr.unwrapPaneSplit(splitEnvelope).pane_id;
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  return { pane, direction };
+}
+
 // Shared by dispatch and dispatch-workspace (DRY-10): they diverge only in
 // how the target pane is acquired (acquirePane), then run the same
 // start-agent/prompt/wait/render pipeline.
@@ -498,7 +578,8 @@ async function runDispatch(opts, acquirePane) {
 async function handleDispatch(argv) {
   const opts = parseDispatchArgs(argv);
   if (opts.help) { process.stdout.write(dispatchHelp()); return; }
-  await runDispatch(opts, acquirePaneViaSplit);
+  const acquirePane = opts.workspace ? acquirePaneViaWorkspaceSplit : acquirePaneViaSplit;
+  await runDispatch(opts, acquirePane);
 }
 
 async function handleDispatchWorkspace(argv) {
