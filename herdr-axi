@@ -439,9 +439,7 @@ async function runDispatch(opts, acquirePane) {
   try {
     herdr.startAgentWhenReady({
       attempt: () => herdr.fetchAgentStart(opts.name, opts.kind, pane),
-      // Sync sleep: a real herdr call blocks the event loop anyway, and this
-      // module is a synchronous CLI, not an async server.
-      sleep: (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms),
+      sleep: herdr.syncSleep,
       now: Date.now,
     });
   } catch (err) {
