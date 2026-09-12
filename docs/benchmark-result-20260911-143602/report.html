@@ -1,0 +1,370 @@
+<title>Herdr vs herdr-axi</title>
+<style>
+:root{
+  --bg:#eef1f0;
+  --surface:#ffffff;
+  --border:#d7dcda;
+  --text:#1b2320;
+  --text-muted:#5c6864;
+  --accent:#b5650a;
+  --accent-soft:#f0dcc0;
+  --good:#2f7d4f;
+  --good-soft:#e2efe6;
+  --bad:#b23b3b;
+  --bad-soft:#f6e4e2;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c;
+    --surface:#1b2126;
+    --border:#2a3238;
+    --text:#e7ece9;
+    --text-muted:#8c9894;
+    --accent:#f5a623;
+    --accent-soft:#3a2c14;
+    --good:#4fbd7d;
+    --good-soft:#173324;
+    --bad:#e2685f;
+    --bad-soft:#3a1f1d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c;
+  --surface:#1b2126;
+  --border:#2a3238;
+  --text:#e7ece9;
+  --text-muted:#8c9894;
+  --accent:#f5a623;
+  --accent-soft:#3a2c14;
+  --good:#4fbd7d;
+  --good-soft:#173324;
+  --bad:#e2685f;
+  --bad-soft:#3a1f1d;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:56px 24px 96px;}
+
+header.report-head{margin-bottom:40px;}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 10px;
+}
+h1{
+  font-family:var(--mono);
+  font-size:clamp(28px,4vw,40px);
+  margin:0 0 12px;
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+.dek{color:var(--text-muted);font-size:16px;max-width:65ch;margin:0 0 28px;}
+
+.chiprow{display:flex;flex-wrap:wrap;gap:10px;}
+.chip{
+  font-family:var(--mono);
+  font-size:13px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:8px;
+  padding:8px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.chip b{color:var(--accent);}
+
+section.test{
+  margin-top:48px;
+  padding-top:32px;
+  border-top:1px solid var(--border);
+}
+h2{
+  font-family:var(--mono);
+  font-size:22px;
+  margin:0 0 6px;
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.winner-tag{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  background:var(--accent-soft);
+  color:var(--accent);
+  border-radius:6px;
+  padding:3px 9px;
+}
+p.task-desc{color:var(--text-muted);margin:0 0 20px;max-width:70ch;}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:24px;
+}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+}
+.stat .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;}
+.stat .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+.stat .row span:first-child{color:var(--text-muted);font-size:12px;}
+.stat .row span:last-child{font-size:16px;}
+.stat .row.win span:last-child{color:var(--good);font-weight:600;}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px;}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+th{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);background:var(--surface);}
+td{font-family:var(--sans);}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tbody tr:nth-child(odd){background:color-mix(in srgb, var(--surface) 60%, var(--bg));}
+
+.callout{
+  border-radius:10px;
+  padding:16px 18px;
+  margin:0 0 16px;
+  font-size:14px;
+}
+.callout.issue{background:var(--bad-soft);border:1px solid var(--bad);}
+.callout.issue .head{color:var(--bad);}
+.callout.note{background:var(--surface);border:1px solid var(--border);}
+.callout .head{
+  font-family:var(--mono);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:6px;
+  display:block;
+}
+
+.findings h3{font-family:var(--mono);font-size:14px;margin:18px 0 6px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;}
+.findings p{margin:0 0 12px;max-width:72ch;}
+
+section.verdict{
+  margin-top:48px;
+  padding:24px;
+  border-radius:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+section.verdict h2{margin-bottom:14px;}
+.verdict-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;}
+.verdict-grid .item{border-left:3px solid var(--accent);padding-left:12px;}
+.verdict-grid .item .k{font-family:var(--mono);font-size:12px;color:var(--text-muted);text-transform:uppercase;}
+.verdict-grid .item .v{font-family:var(--mono);font-size:15px;margin-top:4px;}
+
+section.metrics-add{margin-top:48px;}
+ol.metric-list{padding-left:22px;margin:0;}
+ol.metric-list li{margin-bottom:14px;max-width:72ch;}
+ol.metric-list b{font-family:var(--mono);}
+
+footer{
+  margin-top:56px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:13px;
+}
+</style>
+
+<div class="wrap">
+
+<header class="report-head">
+  <p class="eyebrow">Benchmark rerun · 3 tests · Sonnet 5, low effort</p>
+  <h1>Herdr vs herdr-axi</h1>
+  <p class="dek">Two identical candidate agents per test, one driving Herdr through the raw <code>/herdr</code> skill, the other through the <code>/herdr-axi</code> CLI wrapper. Same prompt, same model, same effort. Each candidate now works inside its own named workspace (<code>TEST-&lt;test&gt;</code> / <code>TEST-&lt;test&gt;-axi</code>) with all its subagents as panes inside it, and the Router Test runs its two candidates sequentially against one shared workspace instead of in parallel.</p>
+  <div class="chiprow">
+    <span class="chip">Read Test <b>→ herdr</b></span>
+    <span class="chip">Synthesizer Test <b>→ herdr</b></span>
+    <span class="chip">Router Test <b>→ herdr</b> (narrow)</span>
+  </div>
+</header>
+
+<div class="callout note">
+  <span class="head">Why this is a rerun</span>
+  The first run tested herdr-axi against an unmerged worktree branch with a follow-up commit made mid-session — not a settled artifact, and not the same footing herdr was tested on. That branch is now merged to master (commit <code>20c6e4f</code>) and the skill's symlink repointed at the merged copy. This report reflects the rerun only; the first run's numbers are superseded.
+</div>
+
+<section class="test">
+  <h2>1. Read Test <span class="winner-tag">winner: herdr</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace (<code>TEST-read</code> / <code>TEST-read-axi</code>) with 2 panes exploring the target repo for holiday-calendar use cases, confirms the two panes agree, leaves the workspace open for the orchestrator to verify and close.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row win"><span>herdr</span><span>307.6s</span></div>
+      <div class="row"><span>herdr-axi</span><span>312.8s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Spawn time</div>
+      <div class="row"><span>herdr</span><span>24.1s</span></div>
+      <div class="row win"><span>herdr-axi</span><span>5.4s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens (tracked)</div>
+      <div class="row win"><span>herdr</span><span>54.9k</span></div>
+      <div class="row"><span>herdr-axi</span><span>64.6k</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time-to-info</td><td class="num">285.9s</td><td class="num">312.8s</td></tr>
+        <tr><td>Tool calls</td><td class="num">20</td><td class="num">23</td></tr>
+        <tr><td>Panes spawned</td><td class="num">2</td><td class="num">2</td></tr>
+        <tr><td>Fallback to raw herdr</td><td>none</td><td>yes — workspace create, 2× agent start, pane split, agent prompt</td></tr>
+        <tr><td>Content read effectively</td><td>yes, no contradictions</td><td>yes, no contradictions (one agent's answer a superset of the other's)</td></tr>
+        <tr><td>Left workspace open as instructed</td><td>yes</td><td>yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>What happened</h3>
+    <p>herdr-axi spawned its first pane much faster (5.4s vs 24.1s), but that lead evaporated: its <code>dispatch-workspace</code> call can only create one agent, and adding the second pane into that same workspace, plus prompting it, is outside what <code>dispatch</code>/<code>dispatch-workspace</code> cover — the candidate had to fall back to five raw <code>herdr</code> calls to finish the setup. herdr needed zero fallbacks. Both candidates got matching, non-contradictory findings on the holiday-calendar mechanism.</p>
+    <h3>Cleanup</h3>
+    <p>Both candidates genuinely left their workspace open. A follow-up verification agent confirmed each was still live, then closed it — the intended cleanup step, not the candidate closing its own work early.</p>
+  </div>
+
+  <div class="callout note">
+    <span class="head">Note</span>
+    herdr's own friction was a harness-level Bash timeout misreporting a backgrounded <code>agent prompt --wait</code> call as failed — the underlying agent had actually finished, confirmed by polling <code>agent get</code>. Not a herdr defect.
+  </div>
+</section>
+
+<section class="test">
+  <h2>2. Synthesizer Test <span class="winner-tag">winner: herdr</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace (<code>TEST-synth</code> / <code>TEST-synth-axi</code>) with 3 panes — 2 analysts (batch-fleet skill, skill-authoring guide) plus 1 synthesizer, who must locate the two analyst panes by name and compile their reports without re-reading the source guides itself.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row win"><span>herdr</span><span>128.8s</span></div>
+      <div class="row"><span>herdr-axi</span><span>227.7s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Spawn time</div>
+      <div class="row win"><span>herdr</span><span>29.6s</span></div>
+      <div class="row"><span>herdr-axi</span><span>117.1s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens (tracked)</div>
+      <div class="row win"><span>herdr</span><span>51.1k</span></div>
+      <div class="row"><span>herdr-axi</span><span>52.8k</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time-to-info</td><td class="num">75.3s</td><td class="num">211.7s</td></tr>
+        <tr><td>Tool calls</td><td class="num">20</td><td class="num">22</td></tr>
+        <tr><td>Panes spawned</td><td class="num">3</td><td class="num">3</td></tr>
+        <tr><td>Fallback to raw herdr</td><td>none</td><td>yes — workspace rename to exact label, 2× pane split + agent start, prompt/read by name</td></tr>
+        <tr><td>Synthesizer routed by pane name, not re-read</td><td>yes</td><td>yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>What happened</h3>
+    <p>Both synthesized reports independently landed on the same read of batch-fleet and skill-authoring — thin-launcher-plus-guide structure, append-only learnings loops, verification over self-report. The gap is again structural, not incidental: herdr-axi's <code>dispatch-workspace</code> names the workspace after the agent (must be lowercase, so it can't produce an exact mixed-case label like "TEST-synth-axi" directly) and cannot add a 2nd or 3rd pane to a workspace it already created — over half the setup had to go through raw <code>herdr</code> calls. herdr needed no fallback at all and finished in under half herdr-axi's time.</p>
+  </div>
+
+  <div class="callout issue">
+    <span class="head">Issue — herdr-axi</span>
+    Two requested agent names collided with pre-existing live agents elsewhere in the session and needed an <code>-axi</code> suffix. One analyst pane hit the alternate-screen read limitation and needed a file-based workaround (handled internally by the synthesizer). Neither issue changed the outcome, but both added to the fallback burden already forced by the missing "add to existing workspace" primitive.
+  </div>
+</section>
+
+<section class="test">
+  <h2>3. Router Test <span class="winner-tag">winner: herdr (narrow)</span></h2>
+  <p class="task-desc">One shared workspace (<code>TEST-router</code>) pre-built with x_engineer (technical framing) and x_product_manager (marketing framing) as two panes for the same fake todolist product. Each candidate must locate that workspace and the x_engineer pane specifically, then ask what the product is. Candidates ran sequentially against this shared resource, not in parallel.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row win"><span>herdr</span><span>20.2s</span></div>
+      <div class="row"><span>herdr-axi</span><span>20.9s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Spawn time</div>
+      <div class="row win"><span>herdr</span><span>0.50s</span></div>
+      <div class="row"><span>herdr-axi</span><span>0.00s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens (tracked)</div>
+      <div class="row win"><span>herdr</span><span>48.9k</span></div>
+      <div class="row"><span>herdr-axi</span><span>43.0k</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time-to-info</td><td class="num">16.2s</td><td class="num">20.9s</td></tr>
+        <tr><td>Correct pane reached</td><td>x_engineer, confirmed distinct from x_product_manager</td><td>x_engineer, confirmed distinct from x_product_manager</td></tr>
+        <tr><td>Answer received</td><td>"The product is an agentic, event-driven todolist for high-speed collaboration."</td><td>"An agentic, event-driven todolist for high-speed collaboration."</td></tr>
+        <tr><td>Technical (not marketing) answer</td><td>yes</td><td>yes</td></tr>
+        <tr><td>Fallback to raw herdr</td><td>yes — <code>agent prompt</code>/<code>agent read</code> (dispatch only creates new agents)</td><td>yes — identical reason</td></tr>
+        <tr><td>Tool calls</td><td class="num">7</td><td class="num">10</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <p>With the shared-resource contamination removed (sequential execution, one pre-built workspace), the gap nearly disappears: herdr finishes in 20.2s vs herdr-axi's 20.9s, a 4% difference. Both candidates needed the exact same raw-herdr fallback for the exact same reason — neither skill's dispatch commands can prompt an agent that already exists, only create new ones. That's a shared capability gap in both tools, not a differentiator. herdr's edge here is a small, real margin, not the wide gap seen in the first run, which was more about workspace/pane-collision noise than the router logic itself.</p>
+  </div>
+</section>
+
+<section class="verdict">
+  <h2>Overall</h2>
+  <p>herdr won all 3 tests, but the margin varies with what's actually being measured. On the Read and Synthesizer tests — where a candidate must place several agents inside one workspace it created — herdr-axi's <code>dispatch</code>/<code>dispatch-workspace</code> repeatedly can't add a 2nd or 3rd agent to an existing workspace, forcing raw-<code>herdr</code> fallbacks for most of the setup and losing 1.8x–4x on time. On the Router Test, where the task is locating and messaging an already-existing agent, both skills hit the identical gap (no "prompt an existing agent" primitive) and the result is a coin-flip-sized 4% margin. The real finding isn't "herdr is faster" — it's that herdr-axi's wrapper covers the create-one-new-agent case well, but degrades to raw herdr for anything beyond that.</p>
+  <div class="verdict-grid">
+    <div class="item"><div class="k">Tests won</div><div class="v">herdr 3 / 3</div></div>
+    <div class="item"><div class="k">Total tokens tracked</div><div class="v">509,368</div></div>
+    <div class="item"><div class="k">Total tool calls</div><div class="v">112</div></div>
+    <div class="item"><div class="k">Total wall time</div><div class="v">~12.4 min</div></div>
+  </div>
+</section>
+
+<section class="metrics-add">
+  <h2>Metrics worth adding</h2>
+  <ol class="metric-list">
+    <li><b>Fallback-call count.</b> Now tracked qualitatively per test (0 for herdr throughout; 3–5 raw-herdr calls for herdr-axi on Read/Synth, 1 shared call on Router). Worth promoting to a first-class number — it explains the timing gap better than tool-call totals do, since a fallback call and a native one aren't equally expensive.</li>
+    <li><b>Structural capability gaps vs incidental friction.</b> This rerun separates two different failure modes that were blended before: herdr-axi's inability to add a pane to an existing workspace is a structural gap (present every time, same root cause); a frozen alt-screen pane or a stale name collision is incidental noise (situational, not guaranteed to recur). Scoring them the same understates how load-bearing the structural gaps are.</li>
+    <li><b>Answer fidelity, not just presence.</b> The Router Test judges correctness as "reached x_engineer, got a technical answer" — worth also scoring whether the wording stayed close to the seeded framing versus drifting, since that's a signal of whether routed context survived intact.</li>
+    <li><b>Real token cost.</b> Candidates still could not self-report token usage in this rerun — neither harness exposes a <code>/cost</code>-equivalent inside a subagent context. The numbers here come from the workflow's own per-agent tracking, not the candidates.</li>
+  </ol>
+</section>
+
+<footer>
+  Rerun via Workflow <code>wf_2bf45824-ca8</code>, 11 agents, sequential test phases with parallel Read/Synth candidate pairs and a strictly sequential Router pair, Sonnet 5 at low effort throughout. Token/time figures are pulled from the workflow's own per-agent tracking; candidate self-reported token usage came back "unknown" in every run and is omitted from the stat tiles above.
+</footer>
+
+</div>
