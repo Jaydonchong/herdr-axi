@@ -23,6 +23,7 @@ usage:
   herdr-axi read <target>        agent status + pane content, merged into one call
   herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
+  herdr-axi prompt <target> "<text>" [--wait]   send a follow-up message to an existing agent
   herdr-axi doctor               compare live herdr against the fixture this tool expects
 
 flags:
@@ -106,6 +107,22 @@ exit: 0 success, 1 error, 2 usage error.
 `;
 }
 
+const PROMPT_FLAGS = ['--wait', '--help'];
+
+function promptHelp() {
+  return `herdr-axi prompt <target> "<text>" - send a follow-up message to an existing agent
+
+usage:
+  herdr-axi prompt <target> "<text>"
+
+flags:
+  --wait                         wait for the agent to settle before reporting
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+}
+
 function doctorHelp() {
   return `herdr-axi doctor - compare live herdr's version and API schema against the fixture this tool expects
 
@@ -172,12 +189,19 @@ const POSITIONAL_FLAG_CONFUSION = {
 // above), the missing-value guard, and enum/int validation, in one place.
 // `spec` is a table of { flag, kind: 'boolean'|'value'|'enum'|'int', dest,
 // values?, code?, default?, freeform? }. `positionals` names the
-// bare-positional dest slots, in order, filled as they are encountered.
+// bare-positional dest slots, in order, filled as they are encountered; an
+// entry is either a dest string, or { dest, freeform: true } for a slot that
+// must accept a "--"-prefixed value instead of rejecting it as an unknown
+// flag (prompt's free-text <text>, which commonly starts with "--").
 // Required-arg presence checks stay with each wrapper, since which args are
 // required differs per command.
 function parseFlags(argv, spec, { positionals = [], validFlags }) {
   const out = { help: false };
   for (const d of spec) out[d.dest] = d.default;
+  // Normalize to { dest, freeform }: every existing caller passes plain dest
+  // strings, so freeform defaults to false and their rejection of a
+  // "--"-prefixed token stays byte-identical (RCH-1).
+  const posSpecs = positionals.map((p) => (typeof p === 'string' ? { dest: p, freeform: false } : p));
   const positionalValues = [];
   const helpFields = () => ({ help: [`Valid flags: ${validFlags.join(', ')}`] });
 
@@ -188,7 +212,7 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
     // token), matching the old per-command parsers this replaced.
     if (arg === '--help' || arg === '-h') {
       out.help = true;
-      positionals.forEach((dest) => { out[dest] = null; });
+      posSpecs.forEach(({ dest }) => { out[dest] = null; });
       return out;
     }
 
@@ -219,19 +243,23 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
     }
 
     if (arg.startsWith('--')) {
-      const hint = positionals.length > 0 ? POSITIONAL_FLAG_CONFUSION[arg] : undefined;
+      // A freeform positional's turn to be filled: take the token as that
+      // positional's value rather than rejecting it as an unknown flag.
+      const nextPositional = posSpecs[positionalValues.length];
+      if (nextPositional && nextPositional.freeform) { positionalValues.push(arg); i++; continue; }
+      const hint = posSpecs.length > 0 ? POSITIONAL_FLAG_CONFUSION[arg] : undefined;
       usageError(`unknown flag ${arg}`, 'unknown_flag', hint
         ? { help: [hint, ...helpFields().help] }
         : helpFields());
     }
-    if (positionalValues.length < positionals.length) { positionalValues.push(arg); i++; continue; }
-    if (positionals.length === 0) {
+    if (positionalValues.length < posSpecs.length) { positionalValues.push(arg); i++; continue; }
+    if (posSpecs.length === 0) {
       usageError(`unknown flag ${arg}`, 'unknown_flag', helpFields());
     }
     usageError(`unexpected argument ${arg}`, 'unknown_flag', helpFields());
   }
 
-  positionals.forEach((dest, idx) => { out[dest] = positionalValues[idx] ?? null; });
+  posSpecs.forEach(({ dest }, idx) => { out[dest] = positionalValues[idx] ?? null; });
   return out;
 }
 
@@ -305,6 +333,24 @@ function parseDispatchWorkspaceArgs(argv) {
     if (opts.label === '') usageError('dispatch-workspace --label cannot be empty', 'empty_label', { help: usage });
   }
   return { name: opts.name, kind: opts.kind, prompt: opts.prompt, cwd, label: opts.label, wait, help: opts.help };
+}
+
+function parsePromptArgs(argv) {
+  const spec = [
+    { flag: '--wait', kind: 'boolean', dest: 'wait', default: false },
+  ];
+  // text is freeform: a follow-up prompt commonly starts with "--" ("--fix the
+  // bug"); target stays non-freeform, so a target starting with "--" still errors.
+  const opts = parseFlags(argv, spec, {
+    positionals: ['target', { dest: 'text', freeform: true }],
+    validFlags: PROMPT_FLAGS,
+  });
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi prompt <target> "<text>"'];
+    if (!opts.target) usageError('prompt requires a target', 'missing_target', { help: usage });
+    if (!opts.text) usageError('prompt requires text', 'missing_text', { help: usage });
+  }
+  return opts;
 }
 
 function parseDoctorArgs(argv) {
@@ -527,6 +573,34 @@ function acquirePaneViaWorkspaceSplit(opts) {
   return { pane, direction };
 }
 
+// Shared by runDispatch and handlePrompt (DRY-10/DRY-11): both need a blocked
+// settle's headline waiting_on, read from the TARGET pane (opts.name for
+// dispatch, opts.target for prompt), so the read target is a param rather
+// than assumed from one opts shape.
+//
+// Best-effort pane read for a blocked settle's headline: a read failure must
+// never suppress the blocked status itself (dispatch's non-negotiable rule),
+// so this is isolated from the settle-status determination at the call site.
+function resolveWaitingOn(readTarget, promptEnvelope) {
+  let settledAgent;
+  try {
+    settledAgent = herdr.unwrapAgentGet(promptEnvelope);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  if (settledAgent.agent_status !== 'blocked') return null;
+  try {
+    // A blocked agent is on the alternate screen; 'recent-unwrapped' fails
+    // agent_not_idle ("its alternate-screen history can only be captured
+    // by scrolling while idle", live-confirmed). 'visible' reads the
+    // current screen instead, which the dialog is on.
+    const paneText = herdr.fetchAgentRead(readTarget, { source: 'visible', lines: 40 });
+    return herdr.firstMeaningfulLine(paneText);
+  } catch {
+    return null;
+  }
+}
+
 // Shared by dispatch and dispatch-workspace (DRY-10): they diverge only in
 // how the target pane is acquired (acquirePane), then run the same
 // start-agent/prompt/wait/render pipeline.
@@ -556,30 +630,9 @@ async function runDispatch(opts, acquirePane) {
     reportOrRethrow(err, { name: opts.name, pane });
   }
 
-  // Best-effort pane read for a blocked settle's headline: a read failure
-  // must never suppress the blocked status itself (dispatch's non-negotiable
-  // rule), so this is isolated from the settle-status determination above.
-  let waitingOn = null;
-  if (opts.wait) {
-    let settledAgent;
-    try {
-      settledAgent = herdr.unwrapAgentGet(promptEnvelope);
-    } catch (err) {
-      reportOrRethrow(err);
-    }
-    if (settledAgent.agent_status === 'blocked') {
-      try {
-        // A blocked agent is on the alternate screen; 'recent-unwrapped' fails
-        // agent_not_idle ("its alternate-screen history can only be captured
-        // by scrolling while idle", live-confirmed). 'visible' reads the
-        // current screen instead, which the dialog is on.
-        const paneText = herdr.fetchAgentRead(opts.name, { source: 'visible', lines: 40 });
-        waitingOn = herdr.firstMeaningfulLine(paneText);
-      } catch {
-        waitingOn = null;
-      }
-    }
-  }
+  // resolveWaitingOn (DRY-10/DRY-11): shared with handlePrompt's own
+  // blocked-settle read below.
+  const waitingOn = opts.wait ? resolveWaitingOn(opts.name, promptEnvelope) : null;
 
   let text;
   try {
@@ -603,6 +656,34 @@ async function handleDispatchWorkspace(argv) {
   const opts = parseDispatchWorkspaceArgs(argv);
   if (opts.help) { process.stdout.write(dispatchWorkspaceHelp()); return; }
   await runDispatch(opts, acquirePaneViaWorkspace);
+}
+
+// Thin wrapper over fetchAgentPrompt (reused unchanged from dispatch): no
+// pane split or agent start, since the target already exists. On --wait, the
+// blocked-pane-read for waitingOn mirrors runDispatch exactly (best-effort: a
+// read failure must never suppress the blocked status).
+async function handlePrompt(argv) {
+  const opts = parsePromptArgs(argv);
+  if (opts.help) { process.stdout.write(promptHelp()); return; }
+
+  let promptEnvelope;
+  try {
+    promptEnvelope = herdr.fetchAgentPrompt(opts.target, opts.text, { wait: opts.wait });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  // resolveWaitingOn (DRY-10/DRY-11): shared with runDispatch's own
+  // blocked-settle read above.
+  const waitingOn = opts.wait ? resolveWaitingOn(opts.target, promptEnvelope) : null;
+
+  let text;
+  try {
+    text = herdr.renderPrompt(opts.target, promptEnvelope, { wait: opts.wait, waitingOn });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${text}\n`);
 }
 
 async function handleDoctor(argv) {
@@ -649,6 +730,11 @@ async function main() {
   // same as every other subcommand here.
   if (process.argv[2] === 'dispatch-workspace') {
     await handleDispatchWorkspace(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'prompt') {
+    await handlePrompt(process.argv.slice(3));
     return;
   }
 
