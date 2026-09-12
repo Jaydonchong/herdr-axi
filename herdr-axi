@@ -471,7 +471,32 @@ function acquirePaneViaSplit(opts) {
 // scope): no direction to choose or report, unlike acquirePaneViaSplit. When
 // opts.label is set, renames the new workspace to it right after creation -
 // the agent name stays lowercase-constrained, the label does not (u2 thesis).
+// Pre-checks the name against the live snapshot before creating anything:
+// herdr itself only rejects agent_name_taken at `agent start`, by which point
+// the workspace and pane already exist and orphan permanently (u2 thesis).
 function acquirePaneViaWorkspace(opts) {
+  let snapshotEnvelope;
+  try {
+    snapshotEnvelope = herdr.fetchSnapshot();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  let agents;
+  try {
+    agents = herdr.unwrapSnapshot(snapshotEnvelope).agents;
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  // Raw .name only, never displayName's pane_id fallback: a nameless agent
+  // has no name to collide with.
+  if (agents.some((a) => a.name === opts.name)) {
+    emitError({
+      error: `an agent named ${opts.name} already exists`,
+      code: 'agent_name_taken',
+      help: herdr.herdrErrorHelp('agent_name_taken'),
+    }, 1);
+  }
+
   let workspaceEnvelope;
   try {
     workspaceEnvelope = herdr.fetchWorkspaceCreate({ cwd: opts.cwd });
