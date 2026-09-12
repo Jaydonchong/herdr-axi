@@ -1,0 +1,458 @@
+<title>Herdr vs herdr-axi</title>
+<style>
+:root{
+  --bg:#eef1f0;
+  --surface:#ffffff;
+  --border:#d7dcda;
+  --text:#1b2320;
+  --text-muted:#5c6864;
+  --accent:#b5650a;
+  --accent-soft:#f0dcc0;
+  --good:#2f7d4f;
+  --good-soft:#e2efe6;
+  --bad:#b23b3b;
+  --bad-soft:#f6e4e2;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c;
+    --surface:#1b2126;
+    --border:#2a3238;
+    --text:#e7ece9;
+    --text-muted:#8c9894;
+    --accent:#f5a623;
+    --accent-soft:#3a2c14;
+    --good:#4fbd7d;
+    --good-soft:#173324;
+    --bad:#e2685f;
+    --bad-soft:#3a1f1d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c;
+  --surface:#1b2126;
+  --border:#2a3238;
+  --text:#e7ece9;
+  --text-muted:#8c9894;
+  --accent:#f5a623;
+  --accent-soft:#3a2c14;
+  --good:#4fbd7d;
+  --good-soft:#173324;
+  --bad:#e2685f;
+  --bad-soft:#3a1f1d;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:56px 24px 96px;}
+
+header.report-head{margin-bottom:40px;}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 10px;
+}
+h1{
+  font-family:var(--mono);
+  font-size:clamp(28px,4vw,40px);
+  margin:0 0 12px;
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+.dek{color:var(--text-muted);font-size:16px;max-width:65ch;margin:0 0 28px;}
+
+.chiprow{display:flex;flex-wrap:wrap;gap:10px;}
+.chip{
+  font-family:var(--mono);
+  font-size:13px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:8px;
+  padding:8px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.chip b{color:var(--accent);}
+
+section.test{
+  margin-top:48px;
+  padding-top:32px;
+  border-top:1px solid var(--border);
+}
+h2{
+  font-family:var(--mono);
+  font-size:22px;
+  margin:0 0 6px;
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.winner-tag{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  background:var(--accent-soft);
+  color:var(--accent);
+  border-radius:6px;
+  padding:3px 9px;
+}
+p.task-desc{color:var(--text-muted);margin:0 0 20px;max-width:70ch;}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:24px;
+}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+}
+.stat .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;}
+.stat .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+.stat .row span:first-child{color:var(--text-muted);font-size:12px;}
+.stat .row span:last-child{font-size:16px;}
+.stat .row.win span:last-child{color:var(--good);font-weight:600;}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px;}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+th{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);background:var(--surface);}
+td{font-family:var(--sans);}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td.win{color:var(--good);font-weight:600;}
+tr:last-child td{border-bottom:none;}
+tbody tr:nth-child(odd){background:color-mix(in srgb, var(--surface) 60%, var(--bg));}
+
+.callout{
+  border-radius:10px;
+  padding:16px 18px;
+  margin:0 0 16px;
+  font-size:14px;
+}
+.callout.issue{background:var(--bad-soft);border:1px solid var(--bad);}
+.callout.issue .head{color:var(--bad);}
+.callout.fixed{background:var(--good-soft);border:1px solid var(--good);}
+.callout.fixed .head{color:var(--good);}
+.callout.note{background:var(--surface);border:1px solid var(--border);}
+.callout .head{
+  font-family:var(--mono);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:6px;
+  display:block;
+}
+.callout code{font-family:var(--mono);font-size:13px;}
+
+.findings h3{font-family:var(--mono);font-size:14px;margin:18px 0 6px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;}
+.findings p{margin:0 0 12px;max-width:72ch;}
+
+section.verdict{
+  margin-top:48px;
+  padding:24px;
+  border-radius:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+section.verdict h2{margin-bottom:14px;}
+section.verdict p{max-width:72ch;}
+.verdict-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;}
+.verdict-grid .item{border-left:3px solid var(--accent);padding-left:12px;}
+.verdict-grid .item .k{font-family:var(--mono);font-size:12px;color:var(--text-muted);text-transform:uppercase;}
+.verdict-grid .item .v{font-family:var(--mono);font-size:15px;margin-top:4px;}
+
+section.metrics-add{margin-top:48px;}
+section.findings-list{margin-top:48px;padding-top:32px;border-top:1px solid var(--border);}
+ol.metric-list{padding-left:22px;margin:0;}
+ol.metric-list li{margin-bottom:14px;max-width:72ch;}
+ol.metric-list b{font-family:var(--mono);}
+section.findings-list p{max-width:72ch;}
+
+footer{
+  margin-top:56px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:13px;
+}
+footer p{max-width:72ch;}
+</style>
+
+<div class="wrap">
+
+<header class="report-head">
+  <p class="eyebrow">Rerun 2026-09-12 · 3 tests · Sonnet 5, low effort</p>
+  <h1>Herdr vs herdr-axi</h1>
+  <p class="dek">Two candidate agents per test, one driving Herdr through the raw <code>/herdr</code> skill, the other through the <code>/herdr-axi</code> CLI wrapper. Same prompt, same model, same effort, run strictly sequentially. Each candidate is a real Claude Code session in its own pane, timing itself with timestamps written outside its own context, with token usage read back from its own transcript.</p>
+  <div class="chiprow">
+    <span class="chip">Read Test <b>→ herdr-axi</b></span>
+    <span class="chip">Synthesizer Test <b>→ herdr</b></span>
+    <span class="chip">Router Test <b>→ herdr</b></span>
+    <span class="chip">Tokens &amp; calls <b>→ herdr-axi 3/3</b></span>
+  </div>
+</header>
+
+<div class="callout fixed">
+  <span class="head">What changed since the 2026-09-11 run</span>
+  That run's headline finding was that <code>herdr-axi</code> could not add a second or third agent to a workspace it had already created, forcing raw-<code>herdr</code> fallbacks through most of every setup. <code>dispatch --workspace</code> now exists. <strong>Across all six runs today, neither candidate fell back outside its assigned skill even once.</strong> The comparison below is the first one measuring the two wrappers on equal footing.
+</div>
+
+<div class="callout note">
+  <span class="head">Do not compare these token numbers to the 2026-09-11 report</span>
+  That run reported roughly 50k per candidate from a workflow's per-agent tracking. This run sums <code>input</code>, <code>output</code>, <code>cache_creation</code> and <code>cache_read</code> from each candidate's own Claude Code transcript, which is why the totals are in the millions. Cache reads dominate that figure and move with context size, so the output-token subtotal is reported alongside it. Both candidates in a test are measured the same way, so the within-test comparison holds; the across-run comparison does not.
+</div>
+
+<section class="test">
+  <h2>1. Read Test <span class="winner-tag">winner: herdr-axi</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace (<code>TEST-read</code> / <code>TEST-read-axi</code>) with 2 explorer panes, both cwd'd to <code>target repository</code>, independently hunting every use of the holiday-calendar concept, then cross-checks that the two agree. The workspace is left open for the orchestrator to verify and close.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row"><span>herdr</span><span>442.3s</span></div>
+      <div class="row win"><span>herdr-axi</span><span>285.3s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Calls to task</div>
+      <div class="row"><span>herdr</span><span>11</span></div>
+      <div class="row win"><span>herdr-axi</span><span>7</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>2.65M</span></div>
+      <div class="row win"><span>herdr-axi</span><span>1.56M</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to start on task</td><td class="num">8.8s</td><td class="num">9.0s</td></tr>
+        <tr><td>Time to spawn</td><td class="num">31.8s</td><td class="num">241.5s</td></tr>
+        <tr><td>Time to get information back</td><td class="num">401.8s</td><td class="num">34.9s</td></tr>
+        <tr><td>Total task time</td><td class="num">442.3s</td><td class="num win">285.3s</td></tr>
+        <tr><td>Output tokens</td><td class="num">10,726</td><td class="num win">7,602</td></tr>
+        <tr><td>Panes spawned</td><td>2, correct</td><td>2, correct, plus 1 orphan empty pane</td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+        <tr><td>Findings agree</td><td>yes, no contradictions</td><td>yes, no contradictions</td></tr>
+        <tr><td>Left workspace open as instructed</td><td>yes, verified w1P</td><td>yes, verified w1S</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout note">
+    <span class="head">Why spawn and read are not comparable line by line</span>
+    <code>dispatch</code> bundles split, start, prompt and settle-wait into one call, so a sub-agent's entire first turn lands in the <code>herdr-axi</code> candidate's spawn phase. The raw-<code>herdr</code> candidate splits and starts first, then prompts, so the same work lands in its read phase. The two phases swap places; only the total is comparable. This holds for all three tests.
+  </div>
+
+  <div class="findings">
+    <h3>What happened</h3>
+    <p>The <code>herdr-axi</code> candidate finished 157 seconds ahead on a task where both explorers did identical research, and used 41% fewer tokens doing it. Both landed on the same answer: the concept is contained entirely in the <code>internal</code> domain, split into <code>TenantHolidayCalendar</code> and <code>PublicHoliday</code>, with the same models, usecases, apiv2 surface, migrations and tests named by both explorers in both runs.</p>
+    <p>The raw-<code>herdr</code> candidate lost most of its margin to a harness boundary rather than to Herdr: two of its calls were killed at 120 seconds by the Claude Code Bash tool and backgrounded, costing 241.9 seconds of its 401.8 second read phase. See the tooling findings below.</p>
+  </div>
+
+  <div class="callout issue">
+    <span class="head">Issue — herdr-axi</span>
+    <code>dispatch-workspace explorer1</code> failed with <code>agent_name_taken</code> because the other candidate's still-open panes held that name — Herdr agent names are one global namespace, not scoped per workspace. The failed call had already created workspace <code>w1S</code> and an empty root pane before the name check ran, leaving an orphan behind. The candidate recovered by suffixing both names and adding them with <code>dispatch --workspace</code>, and still won the test.
+  </div>
+</section>
+
+<section class="test">
+  <h2>2. Synthesizer Test <span class="winner-tag">winner: herdr</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace (<code>TEST-synth</code> / <code>TEST-synth-axi</code>) with 3 panes — 2 analysts on the batch-fleet skill and the skill-authoring guide, plus 1 synthesizer that must locate the two analyst panes by name and compile their reports without opening the sources itself.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row win"><span>herdr</span><span>118.4s</span></div>
+      <div class="row"><span>herdr-axi</span><span>146.9s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Calls to task</div>
+      <div class="row"><span>herdr</span><span>10</span></div>
+      <div class="row win"><span>herdr-axi</span><span>6</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>1.77M</span></div>
+      <div class="row win"><span>herdr-axi</span><span>1.39M</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to start on task</td><td class="num">9.6s</td><td class="num">8.8s</td></tr>
+        <tr><td>Time to spawn</td><td class="num">25.2s</td><td class="num">105.5s</td></tr>
+        <tr><td>Time to get information back</td><td class="num">83.5s</td><td class="num">32.5s</td></tr>
+        <tr><td>Total task time</td><td class="num win">118.4s</td><td class="num">146.9s</td></tr>
+        <tr><td>Output tokens</td><td class="num">9,740</td><td class="num win">8,965</td></tr>
+        <tr><td>Panes spawned</td><td>3, correct</td><td>3, correct</td></tr>
+        <tr><td>Synthesizer routed by pane name</td><td>yes</td><td>yes</td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+        <tr><td>Left workspace open as instructed</td><td>yes, verified w1V</td><td>yes, verified w1X</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>What happened</h3>
+    <p>Both synthesizers were correctly denied the source files and read the analyst panes through Herdr, and both landed on the same reading of the two documents: a thin-launcher skill whose procedure is deferred into a guide, and the guide that mandates exactly that shape.</p>
+    <p>The 28-second gap is entirely the settle-wait. The <code>herdr-axi</code> candidate's three dispatch calls blocked for 21.9s, 21.9s and 49.2s — 93.0 seconds of its 105.5 second spawn phase, or 88%. It issued them in three separate turns, paying another 8 seconds of model gap, when the second and third share no state and could have gone out together. The raw-<code>herdr</code> candidate issued its three <code>agent start</code> calls in one batch and prompted afterwards.</p>
+  </div>
+
+  <div class="callout issue">
+    <span class="head">Issue — herdr-axi</span>
+    <code>--no-wait</code> exists and neither <code>herdr-axi</code> candidate used it in any test. The skill lists the flag but never says when to reach for it, and nothing tells an agent that independent <code>dispatch --workspace</code> calls can be batched. This one documentation gap accounts for most of the loss in this test.
+  </div>
+</section>
+
+<section class="test">
+  <h2>3. Router Test <span class="winner-tag">winner: herdr</span></h2>
+  <p class="task-desc">One shared workspace (<code>TEST-router</code>) pre-built with an x_engineer and an x_product_manager pane, each grounded in its own brief file for the same fake todolist product. Each candidate must find that workspace and the engineer pane specifically, then ask one fixed question. Run sequentially against the shared resource.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row win"><span>herdr</span><span>28.7s</span></div>
+      <div class="row"><span>herdr-axi</span><span>42.0s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Calls to task</div>
+      <div class="row"><span>herdr</span><span>5</span></div>
+      <div class="row win"><span>herdr-axi</span><span>4</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>1.126M</span></div>
+      <div class="row"><span>herdr-axi</span><span>1.126M</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to start on task</td><td class="num">7.0s</td><td class="num">16.1s</td></tr>
+        <tr><td>Time to locate workspace + pane</td><td class="num">8.6s</td><td class="num">11.4s</td></tr>
+        <tr><td>Time to get information back</td><td class="num">13.2s</td><td class="num">25.9s</td></tr>
+        <tr><td>Total task time</td><td class="num win">28.7s</td><td class="num">42.0s</td></tr>
+        <tr><td>Output tokens</td><td class="num">3,777</td><td class="num win">3,132</td></tr>
+        <tr><td>Correct pane reached</td><td>x_engineer, PM untouched</td><td>x_engineer, PM untouched</td></tr>
+        <tr><td>Technical, not marketing, answer</td><td>yes</td><td>yes</td></tr>
+        <tr><td>Wasted calls</td><td>none</td><td>one, <code>read</code> re-run with <code>--full</code></td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>What happened</h3>
+    <p>Both candidates returned the engineer's architecture answer verbatim and neither touched the product manager. The <code>herdr-axi</code> candidate found the workspace and both panes in one bare <code>herdr-axi</code> call where the raw-<code>herdr</code> candidate needed <code>workspace list</code> plus <code>agent list</code> — and still lost, because it then spent two reads where one would do, and wrote its own timing marks out of order.</p>
+    <p>On a task this short the floor dominates: of the 28.7 seconds the raw-<code>herdr</code> candidate took, roughly 20.5 seconds was the model's thinking gap between calls and only about 11.8 seconds was time inside <code>herdr</code>. At low effort every tool call costs around 1.5 seconds of Bash round trip plus 2.2 seconds of model gap before the command does anything at all.</p>
+  </div>
+
+  <div class="callout issue">
+    <span class="head">Issue — herdr-axi</span>
+    <code>read</code> returned the answer truncated mid-word and flagged the pane as frozen on an alternate-screen frame, so the candidate re-ran with <code>--full</code>: 11.2 seconds for what should have been 5.6. In the Synthesizer Test the identical warning fired on two panes whose bodies were already complete. The same signal fires whether content is missing or not, so an agent that trusts it wastes a read now and an agent that ignores it wastes a read later. Today's candidates did one of each.
+  </div>
+</section>
+
+<section class="findings-list">
+  <h2>Tooling findings</h2>
+  <p>Defects in the tools, ranked by measured cost. None of these are a candidate being slow.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Finding</th><th>Where</th><th>Measured cost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>The 120-second wait cliff.</b> A blocking Herdr call longer than the Claude Code Bash tool's foreground limit is killed and backgrounded, and its return value is lost. The candidate then pays a second full wait before it can read. Neither tool reports an error, so neither skill warns about it.</td>
+          <td>Herdr ↔ harness boundary</td>
+          <td class="num">241.9s<br>60% of one read phase</td>
+        </tr>
+        <tr>
+          <td><b><code>--no-wait</code> is undocumented as a pattern.</b> <code>dispatch</code> always blocks on the settle, so starting a fleet serialises every sub-agent's first turn. The flag exists; nothing says when to use it or that independent dispatches can be batched.</td>
+          <td><code>herdr-axi</code> skill</td>
+          <td class="num">93.0s<br>88% of one spawn phase</td>
+        </tr>
+        <tr>
+          <td><b><code>read</code> conflates truncation with the alternate screen.</b> One signal covers two different facts, so the recovery suggestion fires on complete bodies and an agent cannot tell whether re-reading would return anything.</td>
+          <td><code>herdr-axi</code> CLI</td>
+          <td class="num">11.2s<br>plus 2 false alarms</td>
+        </tr>
+        <tr>
+          <td><b>Agent names are one global namespace.</b> Two unrelated workspaces cannot both hold an agent called <code>explorer1</code>, so whichever candidate runs second collides. This is a property of the schedule, not of either skill, and it silently penalises the later run.</td>
+          <td><code>herdr</code></td>
+          <td class="num">most of one<br>spawn phase</td>
+        </tr>
+        <tr>
+          <td><b><code>dispatch-workspace</code> is not atomic.</b> The rejected call had already created the workspace and its root pane before the name check ran, leaving both orphaned.</td>
+          <td><code>herdr-axi</code> CLI</td>
+          <td class="num">1 orphan pane</td>
+        </tr>
+        <tr>
+          <td><b><code>agent prompt</code> can accept a prompt the agent never sees.</b> On a freshly started pane it returns <code>agent_prompt_stalled</code> while the text lands 28 seconds later, or never. One candidate sat idle for nine minutes before the harness noticed.</td>
+          <td><code>herdr</code></td>
+          <td class="num">1 discarded run</td>
+        </tr>
+        <tr>
+          <td><b><code>agent start</code> reports ready while a modal dialog owns the pane.</b> With <code>--permission-mode bypassPermissions</code> the acceptance dialog was on screen, Herdr called the agent <code>idle</code> and <code>interactive_ready</code>, and the next prompt's Enter selected "No, exit". The trust-this-folder dialog behaves the same way.</td>
+          <td><code>herdr</code></td>
+          <td class="num">2 killed fixtures</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="verdict">
+  <h2>Overall</h2>
+  <p><code>herdr-axi</code> wins on cost, <code>herdr</code> wins on latency for small jobs. <code>herdr-axi</code> used 26% fewer tokens and 35% fewer calls, and won every single test on both. It won wall clock only on the Read Test, where the work was long enough to absorb the settle-wait that <code>dispatch</code> forces; on the two short tests the raw-<code>herdr</code> candidate was faster precisely because it can start an agent and prompt it as separate steps.</p>
+  <p>That framing matters more than the scoreline: the wrapper's remaining time losses are not structural any more. Every one of them traces to a documented flag the candidates did not know to use, or to a signal the CLI reports ambiguously. The capability gap that decided the 2026-09-11 run is closed, and neither candidate needed a fallback in any test.</p>
+  <div class="verdict-grid">
+    <div class="item"><div class="k">Tests won on time</div><div class="v">herdr 2 / 3</div></div>
+    <div class="item"><div class="k">Tests won on tokens</div><div class="v">herdr-axi 3 / 3</div></div>
+    <div class="item"><div class="k">Total tokens</div><div class="v">5.54M vs 4.07M</div></div>
+    <div class="item"><div class="k">Total calls to task</div><div class="v">26 vs 17</div></div>
+    <div class="item"><div class="k">Total task time</div><div class="v">589.4s vs 474.2s</div></div>
+    <div class="item"><div class="k">Fallbacks</div><div class="v">0 vs 0</div></div>
+  </div>
+</section>
+
+<section class="metrics-add">
+  <h2>Metrics added to the benchmark</h2>
+  <p class="task-desc">All four are now written into <code>docs/codebase-benchmark.prompt.md</code> with their measurement method, so two runs produce comparable numbers.</p>
+  <ol class="metric-list">
+    <li><b>Calls to task.</b> Herdr control commands between the first control call and the last read, excluding instrumentation. This is the metric the wrapper is designed to move, and it is far less noisy than wall clock — at low effort a call costs ~3.7s of floor regardless of what it does. <code>herdr-axi</code> won it 3/3 even in the tests it lost on time.</li>
+    <li><b>Recovery cost.</b> Seconds and calls spent recovering from an error, reported separately with the triggering error named. Without it, the Read Test's name collision hides inside a normal-looking 241.5s spawn number.</li>
+    <li><b>Instruction-fidelity defects.</b> A counted list, not a yes/no, verified against a live home view rather than the candidate's own claim. This run: <code>herdr</code> 0, <code>herdr-axi</code> 2 — one orphaned pane, one set of timing marks written out of order.</li>
+    <li><b>Total task time as the primary figure.</b> Measured from first action to last read, stopping before the candidate composes its report file, which cost 16–19 seconds of pure instrumentation in every run.</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Six candidate runs, each a real Claude Code session on Sonnet 5 at low effort in its own Herdr workspace with its own empty working directory, executed strictly sequentially. Timing comes from five fixed marks each candidate wrote to a file outside its own context; token usage is summed from each candidate's own transcript, filtered to that candidate's session and cut at its final mark. Pre-flight confirmed both skills on <code>master</code> with clean trees, the <code>herdr-axi</code> CLI repo on <code>master</code> with all feature branches merged, and <code>herdr-axi doctor</code> reporting <code>status: match</code> against herdr 0.8.0.</p>
+  <p>The Router Test was run twice. The first attempt was discarded because the fixture agent refused a roleplay primer as a prompt-injection attempt; the fixture was rebuilt to read a real brief file from disk, and both candidates ran against the rebuilt version. All eleven workspaces created for this benchmark were closed afterwards and the session verified back at its original six.</p>
+</footer>
+
+</div>
