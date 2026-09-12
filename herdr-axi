@@ -24,6 +24,7 @@ usage:
   herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
   herdr-axi prompt <target> "<text>" [--wait]   send a follow-up message to an existing agent
+  herdr-axi settle <name>... [--all] [--timeout <ms>]   block until each agent settles, race-safe
   herdr-axi doctor               compare live herdr against the fixture this tool expects
 
 flags:
@@ -123,6 +124,27 @@ exit: 0 success, 1 error, 2 usage error.
 `;
 }
 
+const SETTLE_FLAGS = ['--all', '--timeout', '--help'];
+
+// Built as a function, not a module-const (mirrors readHelp): needs
+// herdr.SETTLE_DEFAULT_TIMEOUT_MS (DRY-9), only available once main() has
+// imported the ESM lib.
+function settleHelp() {
+  return `herdr-axi settle <name>... [--all] [--timeout <ms>] - block until each named agent settles, race-safe
+
+usage:
+  herdr-axi settle <name>...
+  herdr-axi settle --all
+
+flags:
+  --all                          settle every named live agent instead of a specific list
+  --timeout <ms>                 overall deadline; default ${herdr.SETTLE_DEFAULT_TIMEOUT_MS}
+  --help                         this text
+
+exit: 0 all settled, 1 one or more still open at the deadline, 2 usage error.
+`;
+}
+
 function doctorHelp() {
   return `herdr-axi doctor - compare live herdr's version and API schema against the fixture this tool expects
 
@@ -192,18 +214,28 @@ const POSITIONAL_FLAG_CONFUSION = {
 // bare-positional dest slots, in order, filled as they are encountered; an
 // entry is either a dest string, or { dest, freeform: true } for a slot that
 // must accept a "--"-prefixed value instead of rejecting it as an unknown
-// flag (prompt's free-text <text>, which commonly starts with "--").
+// flag (prompt's free-text <text>, which commonly starts with "--"), or
+// { dest, variadic: true } for a last slot that collects every remaining
+// non-flag token instead of just one (settle's <name>...). variadic is
+// opt-in and must be the last positional; a caller who never passes it (all
+// 6 fixed-arity callers before settle) gets byte-identical behavior, since
+// the variadic-collection branch below only fires when its index is reached.
 // Required-arg presence checks stay with each wrapper, since which args are
 // required differs per command.
 function parseFlags(argv, spec, { positionals = [], validFlags }) {
   const out = { help: false };
   for (const d of spec) out[d.dest] = d.default;
-  // Normalize to { dest, freeform }: every existing caller passes plain dest
-  // strings, so freeform defaults to false and their rejection of a
-  // "--"-prefixed token stays byte-identical (RCH-1).
+  // Normalize to { dest, freeform, variadic }: every existing caller passes
+  // plain dest strings, so freeform/variadic default to false and their
+  // rejection of a "--"-prefixed token, plus their fixed-arity positional
+  // count, stays byte-identical (RCH-1).
   const posSpecs = positionals.map((p) => (typeof p === 'string' ? { dest: p, freeform: false } : p));
   const positionalValues = [];
   const helpFields = () => ({ help: [`Valid flags: ${validFlags.join(', ')}`] });
+  // Index of the variadic positional, if any (must be the last entry); -1
+  // when no caller opted in, which keeps every fixed-arity check below
+  // unreachable for the 5 existing callers.
+  const variadicIndex = posSpecs.findIndex((p) => p.variadic);
 
   let i = 0;
   while (i < argv.length) {
@@ -212,7 +244,7 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
     // token), matching the old per-command parsers this replaced.
     if (arg === '--help' || arg === '-h') {
       out.help = true;
-      posSpecs.forEach(({ dest }) => { out[dest] = null; });
+      posSpecs.forEach(({ dest, variadic }) => { out[dest] = variadic ? [] : null; });
       return out;
     }
 
@@ -252,6 +284,11 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
         ? { help: [hint, ...helpFields().help] }
         : helpFields());
     }
+    // Once the variadic slot is reached, every further non-flag token is
+    // collected into it rather than erroring as an unexpected argument.
+    if (variadicIndex !== -1 && positionalValues.length >= variadicIndex) {
+      positionalValues.push(arg); i++; continue;
+    }
     if (positionalValues.length < posSpecs.length) { positionalValues.push(arg); i++; continue; }
     if (posSpecs.length === 0) {
       usageError(`unknown flag ${arg}`, 'unknown_flag', helpFields());
@@ -259,7 +296,9 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
     usageError(`unexpected argument ${arg}`, 'unknown_flag', helpFields());
   }
 
-  posSpecs.forEach(({ dest }, idx) => { out[dest] = positionalValues[idx] ?? null; });
+  posSpecs.forEach(({ dest, variadic }, idx) => {
+    out[dest] = variadic ? positionalValues.slice(idx) : (positionalValues[idx] ?? null);
+  });
   return out;
 }
 
@@ -349,6 +388,30 @@ function parsePromptArgs(argv) {
     const usage = ['usage: herdr-axi prompt <target> "<text>"'];
     if (!opts.target) usageError('prompt requires a target', 'missing_target', { help: usage });
     if (!opts.text) usageError('prompt requires text', 'missing_text', { help: usage });
+  }
+  return opts;
+}
+
+// Uses parseFlags's variadic positional (DRY-8): names is "one or more",
+// unlike every other command's fixed-arity target, so it opts into the
+// { dest, variadic: true } slot rather than a bespoke parser.
+function parseSettleArgs(argv) {
+  const spec = [
+    { flag: '--all', kind: 'boolean', dest: 'all', default: false },
+    { flag: '--timeout', kind: 'int', dest: 'timeout', code: 'bad_timeout', default: herdr.SETTLE_DEFAULT_TIMEOUT_MS },
+  ];
+  const opts = parseFlags(argv, spec, {
+    positionals: [{ dest: 'names', variadic: true }],
+    validFlags: SETTLE_FLAGS,
+  });
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi settle <name>... [--all] [--timeout <ms>]'];
+    if (opts.names.length === 0 && !opts.all) {
+      usageError('settle requires at least one name, or --all', 'missing_names', { help: usage });
+    }
+    if (opts.names.length > 0 && opts.all) {
+      usageError('settle cannot take both names and --all', 'names_and_all', { help: usage });
+    }
   }
   return opts;
 }
@@ -467,6 +530,24 @@ function acquirePaneViaSplit(opts) {
   return { pane, direction };
 }
 
+// Fetches the live snapshot and unwraps it to its agents array (DRY-8/
+// DRY-11): shared by acquirePaneViaWorkspace (agent_name_taken pre-check) and
+// resolveAllNames (settle --all), the only two call sites needing the raw
+// live agent list rather than the display-projected home view.
+function fetchLiveAgents() {
+  let snapshotEnvelope;
+  try {
+    snapshotEnvelope = herdr.fetchSnapshot();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  try {
+    return herdr.unwrapSnapshot(snapshotEnvelope).agents;
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+}
+
 // Acquires the target pane by creating a workspace (dispatch-workspace's
 // scope): no direction to choose or report, unlike acquirePaneViaSplit. When
 // opts.label is set, renames the new workspace to it right after creation -
@@ -475,18 +556,7 @@ function acquirePaneViaSplit(opts) {
 // herdr itself only rejects agent_name_taken at `agent start`, by which point
 // the workspace and pane already exist and orphan permanently (u2 thesis).
 function acquirePaneViaWorkspace(opts) {
-  let snapshotEnvelope;
-  try {
-    snapshotEnvelope = herdr.fetchSnapshot();
-  } catch (err) {
-    reportOrRethrow(err);
-  }
-  let agents;
-  try {
-    agents = herdr.unwrapSnapshot(snapshotEnvelope).agents;
-  } catch (err) {
-    reportOrRethrow(err);
-  }
+  const agents = fetchLiveAgents();
   // Raw .name only, never displayName's pane_id fallback: a nameless agent
   // has no name to collide with.
   if (agents.some((a) => a.name === opts.name)) {
@@ -598,14 +668,28 @@ function acquirePaneViaWorkspaceSplit(opts) {
   return { pane, direction };
 }
 
+// Best-effort blocked-dialog headline for `target` (DRY-8/DRY-11): shared by
+// resolveWaitingOn (a freshly-submitted dispatch/prompt) and
+// resolveSettleWaitingOn (settle, which has no prompt envelope to check
+// status from first). A blocked agent is on the alternate screen;
+// 'recent-unwrapped' fails agent_not_idle ("its alternate-screen history can
+// only be captured by scrolling while idle", live-confirmed). 'visible'
+// reads the current screen instead, which the dialog is on. A read failure
+// must never suppress the blocked status itself (dispatch's non-negotiable
+// rule), so this returns null rather than throwing.
+function readBestEffortHeadline(target) {
+  try {
+    const paneText = herdr.fetchAgentRead(target, { source: 'visible', lines: 40 });
+    return herdr.firstMeaningfulLine(paneText);
+  } catch {
+    return null;
+  }
+}
+
 // Shared by runDispatch and handlePrompt (DRY-10/DRY-11): both need a blocked
 // settle's headline waiting_on, read from the TARGET pane (opts.name for
 // dispatch, opts.target for prompt), so the read target is a param rather
 // than assumed from one opts shape.
-//
-// Best-effort pane read for a blocked settle's headline: a read failure must
-// never suppress the blocked status itself (dispatch's non-negotiable rule),
-// so this is isolated from the settle-status determination at the call site.
 function resolveWaitingOn(readTarget, promptEnvelope) {
   let settledAgent;
   try {
@@ -614,16 +698,7 @@ function resolveWaitingOn(readTarget, promptEnvelope) {
     reportOrRethrow(err);
   }
   if (settledAgent.agent_status !== 'blocked') return null;
-  try {
-    // A blocked agent is on the alternate screen; 'recent-unwrapped' fails
-    // agent_not_idle ("its alternate-screen history can only be captured
-    // by scrolling while idle", live-confirmed). 'visible' reads the
-    // current screen instead, which the dialog is on.
-    const paneText = herdr.fetchAgentRead(readTarget, { source: 'visible', lines: 40 });
-    return herdr.firstMeaningfulLine(paneText);
-  } catch {
-    return null;
-  }
+  return readBestEffortHeadline(readTarget);
 }
 
 // Shared by dispatch and dispatch-workspace (DRY-10): they diverge only in
@@ -709,6 +784,52 @@ async function handlePrompt(argv) {
   process.stdout.write(`${text}\n`);
 }
 
+// Resolves --all against the live snapshot: every named live agent, skipping
+// a nameless one (it has no name to settle "by name"; a caller wanting it
+// explicitly can still pass its pane_id as a positional, same as read/prompt
+// already treat pane_id as a valid target).
+function resolveAllNames() {
+  const agents = fetchLiveAgents();
+  return agents.filter((a) => a.name).map((a) => a.name);
+}
+
+// Best-effort waiting_on for a blocked settle result, delegating to
+// readBestEffortHeadline (DRY-8/DRY-11) - not resolveWaitingOn itself, which
+// is shaped around a freshly-submitted prompt envelope this command does not
+// have.
+function resolveSettleWaitingOn(name) {
+  return readBestEffortHeadline(name);
+}
+
+async function handleSettle(argv) {
+  const opts = parseSettleArgs(argv);
+  if (opts.help) { process.stdout.write(settleHelp()); return; }
+
+  const names = opts.all ? resolveAllNames() : opts.names;
+
+  let results;
+  try {
+    results = herdr.settleAgents(names, { timeoutMs: opts.timeout });
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+
+  const withWaitingOn = results.map((r) => (
+    r.status === 'blocked' ? { ...r, waitingOn: resolveSettleWaitingOn(r.name) } : r
+  ));
+
+  let text;
+  try {
+    text = herdr.renderSettle(withWaitingOn);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${text}\n`);
+  // A partial settle is a normal rendered result (mirrors handleDoctor's
+  // mismatch case), not routed through emitError/HerdrAxiError.
+  if (withWaitingOn.some((r) => !r.settled)) throw new Exit(1);
+}
+
 async function handleDoctor(argv) {
   const opts = parseDoctorArgs(argv);
   if (opts.help) { process.stdout.write(doctorHelp()); return; }
@@ -758,6 +879,11 @@ async function main() {
 
   if (process.argv[2] === 'prompt') {
     await handlePrompt(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'settle') {
+    await handleSettle(process.argv.slice(3));
     return;
   }
 

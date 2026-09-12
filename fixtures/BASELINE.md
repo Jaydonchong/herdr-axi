@@ -107,6 +107,31 @@ Two synthetic agent rows were hand-added to cover the missing `AgentStatus` valu
 The synthetic rows are `agent-i` (`blocked`) and `agent-j` (`unknown`), placed in a synthetic workspace `wZ`, cloned from a real redacted row so their shape is identical to a live row.
 The full set of `agent_status` values in the fixture is `blocked`, `done`, `idle`, `unknown`, `working`.
 
+## Settle race measurement
+
+Measured on 2026-09-12 inside a live Herdr session, herdr 0.8.0, Node v22.22.3.
+Backs SETTLE_POLL_MS's safety-margin claim in `lib/herdr.mjs`: how long a
+fresh prompt takes to move an already-settled agent off its baseline status.
+
+An idle agent (`settle-baseline-probe`) was sent a new prompt via
+`herdr-axi prompt settle-baseline-probe "..." ` (no `--wait`, so the call
+returns immediately after sending), then polled with `herdr agent get` every
+~140ms until its `state_change_seq` moved off the baseline it held before the
+new prompt was sent.
+
+| Elapsed since prompt sent | agent_status | state_change_seq | Notes |
+| --- | --- | --- | --- |
+| 0.007s | done | 2431 | baseline - the PREVIOUS prompt's already-settled state |
+| 0.395s | done | 2431 | unchanged |
+| 0.523s | working | 2432 | first observed change - the new prompt was picked up |
+| 3.956s | done | 2433 | the new prompt's own settle, unrelated to the race window |
+
+The pre-work race window - how long an agent can still read as its OLD
+settled status before picking up a freshly-sent prompt - closed at 0.523s in
+this one observation. SETTLE_POLL_MS (2000ms) is roughly a 4x margin over
+this data point, not a statistically bounded worst case; no repeat runs were
+taken.
+
 ## Version values, step 1
 
 For Phase 4 `doctor` to compare against:
