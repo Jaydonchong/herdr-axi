@@ -439,6 +439,60 @@ footer p{max-width:72ch;}
   </div>
 </section>
 
+<section class="findings-list">
+  <h2>Suggested improvements</h2>
+  <p>Six changes came out of these findings, ranked by measured cost. Two are CLI code, four are skill documentation. Nothing here touches the raw <code>/herdr</code> skill, which stays fixed as the benchmark's baseline.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>Change</th><th>Where</th><th>Evidence it rests on</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td>Cap every documented blocking wait under the harness's foreground limit, around 90 seconds, and document fire-and-poll for anything longer. State that a killed wait loses its return value.</td>
+          <td>skill</td>
+          <td class="num">241.9s lost<br>60% of one read phase</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td>Document <code>--no-wait</code> as the pattern for starting more than one agent, not just as a flag, and say that independent <code>dispatch --workspace</code> calls can be batched into one turn.</td>
+          <td>skill</td>
+          <td class="num">93.0s<br>88% of one spawn phase</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td>Separate the alternate-screen fact from real truncation in <code>read</code>'s output, and suggest a recovery path only when re-reading would actually return more.</td>
+          <td>CLI</td>
+          <td class="num">11.2s<br>plus 2 false alarms</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td>Make <code>dispatch-workspace</code> atomic: check the agent name against live agents before creating a workspace, so a rejected call leaves nothing behind.</td>
+          <td>CLI</td>
+          <td class="num">1 orphan<br>workspace + pane</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td>Drop the standalone <code>HERDR_ENV</code> guard. The variable is already in the agent's environment and every command fails loudly without a session, so the check is a round trip that finds nothing.</td>
+          <td>skill</td>
+          <td class="num">~4s of every<br>7s start phase</td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td>Read narrow first and widen only on a real truncation signal; warn that agent names are global across the session, not scoped per workspace.</td>
+          <td>skill</td>
+          <td class="num">45.3s on three<br><code>--full</code> reads</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="findings">
+    <h3>Left deliberately unfixed</h3>
+    <p>Three findings sit in <code>herdr</code> itself or at its boundary with the Claude Code harness: the 120-second wait cliff, the global agent-name namespace, and <code>agent start</code> reporting a pane ready while a modal dialog owns it. The raw <code>/herdr</code> skill is this benchmark's control, so changing it would invalidate every future comparison. They are recorded here and worked around in the benchmark's own harness instead.</p>
+    <h3>What happens next</h3>
+    <p>All six were implemented, and the benchmark was rerun against them the same day. That rerun is the authority on whether they worked; this report is the measurement that motivated them.</p>
+  </div>
+</section>
+
 <section class="metrics-add">
   <h2>Metrics added to the benchmark</h2>
   <p class="task-desc">All four are now written into <code>docs/codebase-benchmark.prompt.md</code> with their measurement method, so two runs produce comparable numbers.</p>
