@@ -1,0 +1,444 @@
+<title>Herdr vs herdr-axi</title>
+<style>
+:root{
+  --bg:#eef1f0;
+  --surface:#ffffff;
+  --border:#d7dcda;
+  --text:#1b2320;
+  --text-muted:#5c6864;
+  --accent:#b5650a;
+  --accent-soft:#f0dcc0;
+  --good:#2f7d4f;
+  --good-soft:#e2efe6;
+  --bad:#b23b3b;
+  --bad-soft:#f6e4e2;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c;
+    --surface:#1b2126;
+    --border:#2a3238;
+    --text:#e7ece9;
+    --text-muted:#8c9894;
+    --accent:#f5a623;
+    --accent-soft:#3a2c14;
+    --good:#4fbd7d;
+    --good-soft:#173324;
+    --bad:#e2685f;
+    --bad-soft:#3a1f1d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c;
+  --surface:#1b2126;
+  --border:#2a3238;
+  --text:#e7ece9;
+  --text-muted:#8c9894;
+  --accent:#f5a623;
+  --accent-soft:#3a2c14;
+  --good:#4fbd7d;
+  --good-soft:#173324;
+  --bad:#e2685f;
+  --bad-soft:#3a1f1d;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:56px 24px 96px;}
+
+header.report-head{margin-bottom:40px;}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 10px;
+}
+h1{
+  font-family:var(--mono);
+  font-size:clamp(28px,4vw,40px);
+  margin:0 0 12px;
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+.dek{color:var(--text-muted);font-size:16px;max-width:65ch;margin:0 0 28px;}
+
+.chiprow{display:flex;flex-wrap:wrap;gap:10px;}
+.chip{
+  font-family:var(--mono);
+  font-size:13px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:8px;
+  padding:8px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.chip b{color:var(--accent);}
+
+section.test{
+  margin-top:48px;
+  padding-top:32px;
+  border-top:1px solid var(--border);
+}
+h2{
+  font-family:var(--mono);
+  font-size:22px;
+  margin:0 0 6px;
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.winner-tag{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  background:var(--accent-soft);
+  color:var(--accent);
+  border-radius:6px;
+  padding:3px 9px;
+}
+p.task-desc{color:var(--text-muted);margin:0 0 20px;max-width:70ch;}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:24px;
+}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+}
+.stat .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;}
+.stat .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+.stat .row span:first-child{color:var(--text-muted);font-size:12px;}
+.stat .row span:last-child{font-size:16px;}
+.stat .row.win span:last-child{color:var(--good);font-weight:600;}
+.stat .row.lose span:last-child{color:var(--bad);font-weight:600;}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px;}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+th{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);background:var(--surface);}
+td{font-family:var(--sans);}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td.win{color:var(--good);font-weight:600;}
+td.lose{color:var(--bad);font-weight:600;}
+tr:last-child td{border-bottom:none;}
+tbody tr:nth-child(odd){background:color-mix(in srgb, var(--surface) 60%, var(--bg));}
+
+.callout{
+  border-radius:10px;
+  padding:16px 18px;
+  margin:0 0 16px;
+  font-size:14px;
+}
+.callout.issue{background:var(--bad-soft);border:1px solid var(--bad);}
+.callout.issue .head{color:var(--bad);}
+.callout.fixed{background:var(--good-soft);border:1px solid var(--good);}
+.callout.fixed .head{color:var(--good);}
+.callout.note{background:var(--surface);border:1px solid var(--border);}
+.callout .head{
+  font-family:var(--mono);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:6px;
+  display:block;
+}
+.callout code{font-family:var(--mono);font-size:13px;}
+.callout pre{
+  font-family:var(--mono);
+  font-size:12.5px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  margin:10px 0 0;
+}
+
+.findings h3{font-family:var(--mono);font-size:14px;margin:18px 0 6px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;}
+.findings p{margin:0 0 12px;max-width:72ch;}
+
+section.verdict{
+  margin-top:48px;
+  padding:24px;
+  border-radius:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+section.verdict h2{margin-bottom:14px;}
+section.verdict p{max-width:72ch;}
+.verdict-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;}
+.verdict-grid .item{border-left:3px solid var(--accent);padding-left:12px;}
+.verdict-grid .item .k{font-family:var(--mono);font-size:12px;color:var(--text-muted);text-transform:uppercase;}
+.verdict-grid .item .v{font-family:var(--mono);font-size:15px;margin-top:4px;}
+
+section.metrics-add{margin-top:48px;}
+section.findings-list{margin-top:48px;padding-top:32px;border-top:1px solid var(--border);}
+ol.metric-list{padding-left:22px;margin:0;}
+ol.metric-list li{margin-bottom:14px;max-width:72ch;}
+ol.metric-list b{font-family:var(--mono);}
+section.findings-list p{max-width:72ch;}
+
+footer{
+  margin-top:56px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:13px;
+}
+footer p{max-width:72ch;}
+</style>
+
+<div class="wrap">
+
+<header class="report-head">
+  <p class="eyebrow">Run 3 · 2026-09-12 · after the settle command</p>
+  <h1>Herdr vs herdr-axi</h1>
+  <p class="dek">The same three tests, run a third time. Run 2 showed the wrapper winning every test on time while losing tokens on two of them, to a race in a settle loop its own guidance asked candidates to hand-write. That loop is now a command. This run measures what happened when the hazard moved out of prose and into code.</p>
+  <div class="chiprow">
+    <span class="chip">Read Test <b>→ herdr-axi</b></span>
+    <span class="chip">Synthesizer Test <b>→ herdr-axi</b></span>
+    <span class="chip">Router Test <b>→ herdr-axi</b></span>
+    <span class="chip">Tokens <b>→ herdr-axi 3/3</b></span>
+  </div>
+</header>
+
+<div class="callout fixed">
+  <span class="head">Every cell, one side</span>
+  <code>herdr-axi</code> wins all three tests on time <em>and</em> all three on tokens: <b>32.7% fewer tokens and 17.3% faster</b> overall. This is the first run of this benchmark in which either side takes every measure. The Read Test's token regression did not merely shrink, it reversed: 3.04M in run 2 against 1.31M here, on a raw-<code>herdr</code> arm that barely moved.
+</div>
+
+<section class="test">
+  <h2>1. Read Test <span class="winner-tag">winner: herdr-axi</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace with 2 explorer panes, both cwd'd to <code>target repository</code>, independently hunting every use of the holiday-calendar concept, then cross-checks that the two agree and leaves the workspace open.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row"><span>herdr</span><span>317.4s</span></div>
+      <div class="row win"><span>herdr-axi</span><span>258.6s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>2.02M</span></div>
+      <div class="row win"><span>herdr-axi</span><span>1.31M</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Model turns</div>
+      <div class="row"><span>herdr</span><span>29</span></div>
+      <div class="row win"><span>herdr-axi</span><span>19</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to start on task</td><td class="num">14.0s</td><td class="num win">6.0s</td></tr>
+        <tr><td>Time to spawn</td><td class="num">29.6s</td><td class="num win">22.2s</td></tr>
+        <tr><td>Time to get information back</td><td class="num">273.8s</td><td class="num win">230.4s</td></tr>
+        <tr><td>Total task time</td><td class="num">317.4s</td><td class="num win">258.6s</td></tr>
+        <tr><td>Calls to task</td><td class="num">10</td><td class="num win">7</td></tr>
+        <tr><td>Output tokens</td><td class="num">9,807</td><td class="num win">4,220</td></tr>
+        <tr><td>Panes spawned</td><td>2, correct</td><td>2, correct, no orphan</td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+        <tr><td>Findings agree</td><td>yes, no contradictions</td><td>yes, no contradictions</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>The regression reversed</h3>
+    <p>Run 2's candidate spent 43 model turns on this test, six of them no-op shell calls it ran to mark time after its hand-written wait loop exited early. This candidate spent <b>19</b>. The 24 turns it did not spend are the whole of the 1.73M token difference between the two runs, at an identical per-turn context cost.</p>
+    <p>The raw-<code>herdr</code> arm moved from 1.97M to 2.02M across the same two runs. The swing belongs to the wrapper, not to the day.</p>
+  </div>
+</section>
+
+<section class="test">
+  <h2>2. Synthesizer Test <span class="winner-tag">winner: herdr-axi</span></h2>
+  <p class="task-desc">Each candidate creates its own workspace with 3 panes — 2 analysts on different documents, plus a synthesizer that must locate the two analyst panes by name and compile their reports without opening the sources itself.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row"><span>herdr</span><span>131.2s</span></div>
+      <div class="row win"><span>herdr-axi</span><span>113.2s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>2.28M</span></div>
+      <div class="row win"><span>herdr-axi</span><span>1.41M</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Calls to task</div>
+      <div class="row"><span>herdr</span><span>12</span></div>
+      <div class="row win"><span>herdr-axi</span><span>7</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to start on task</td><td class="num">14.1s</td><td class="num win">6.6s</td></tr>
+        <tr><td>Time to spawn</td><td class="num win">30.2s</td><td class="num">42.9s</td></tr>
+        <tr><td>Time to get information back</td><td class="num">86.9s</td><td class="num win">63.7s</td></tr>
+        <tr><td>Total task time</td><td class="num">131.2s</td><td class="num win">113.2s</td></tr>
+        <tr><td>Model turns</td><td class="num">33</td><td class="num win">21</td></tr>
+        <tr><td>Output tokens</td><td class="num">10,922</td><td class="num win">7,796</td></tr>
+        <tr><td>Panes spawned</td><td>3, correct</td><td>3, correct</td></tr>
+        <tr><td>Synthesizer routed by pane name</td><td>yes</td><td>yes</td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>The redundant read is gone</h3>
+    <p>Run 2's candidate paid an extra read here because <code>--full</code> returned a body beginning mid-sentence and it needed a wider <code>--lines</code> to recover the opening. The skill now states that the two are independent caps — one lifts the character limit, the other widens the scrollback window — and the extra read did not recur.</p>
+    <p>This is the one test where the wrapper's spawn phase is slower, at 42.9s against 30.2s. The work moved, it did not disappear: the wrapper's read phase is 23 seconds shorter, and it finishes 18 seconds ahead overall.</p>
+  </div>
+</section>
+
+<section class="test">
+  <h2>3. Router Test <span class="winner-tag">winner: herdr-axi</span></h2>
+  <p class="task-desc">One shared workspace pre-built with an engineer and a product manager pane, each grounded in its own brief file for the same fictional product. Each candidate must find the workspace and the engineer specifically, then ask one fixed question. Run sequentially.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total task time</div>
+      <div class="row"><span>herdr</span><span>36.6s</span></div>
+      <div class="row win"><span>herdr-axi</span><span>29.7s</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Tokens</div>
+      <div class="row"><span>herdr</span><span>1.14M</span></div>
+      <div class="row win"><span>herdr-axi</span><span>0.94M</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Calls to task</div>
+      <div class="row"><span>herdr</span><span>4</span></div>
+      <div class="row win"><span>herdr-axi</span><span>3</span></div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>herdr</th><th>herdr-axi</th></tr></thead>
+      <tbody>
+        <tr><td>Time to locate workspace + pane</td><td class="num">10.8s</td><td class="num win">8.6s</td></tr>
+        <tr><td>Total task time</td><td class="num">36.6s</td><td class="num win">29.7s</td></tr>
+        <tr><td>Model turns</td><td class="num">17</td><td class="num win">14</td></tr>
+        <tr><td>Output tokens</td><td class="num">2,875</td><td class="num">2,850</td></tr>
+        <tr><td>Correct pane reached</td><td>engineer, PM untouched</td><td>engineer, PM untouched</td></tr>
+        <tr><td>Answer captured</td><td>complete, with architecture</td><td>complete, with architecture</td></tr>
+        <tr><td>Fallback outside assigned skill</td><td>none</td><td>none</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="findings">
+    <h3>The run 2 miss did not recur</h3>
+    <p>Run 2's wrapper candidate captured only the engineer's headline sentence and dropped the architecture behind it, having stopped at a plain read without following the <code>--full</code> line its own <code>help[]</code> gave it. This candidate captured the complete answer, CRDT store and event bus included.</p>
+  </div>
+</section>
+
+<section class="findings-list">
+  <h2>The settle command</h2>
+  <p>Run 2's guidance told candidates to settle a <code>--no-wait</code> dispatch by writing a shell poll over the home view. Two independent candidates wrote the same broken loop, which is the signature of a missing primitive rather than missing prose. It is now one command.</p>
+
+  <div class="callout note">
+    <span class="head">Interface</span>
+<pre>herdr-axi settle &lt;name&gt;... [--all] [--timeout &lt;ms&gt;]
+exit: 0 all settled, 1 one or more still open at the deadline, 2 usage error.</pre>
+  </div>
+
+  <div class="findings">
+    <h3>Why a status poll cannot be made correct</h3>
+    <p>A freshly dispatched agent reports <code>idle</code> before it starts working, which is the same status it reports after it finishes. A single snapshot cannot tell those apart, so run 2's one-stage loop exited 1.4 seconds after dispatch. Staging it — wait for <code>working</code>, then wait for the settle — fixes that case and introduces a worse one: a task that starts and finishes between two polls is never observed working, and the first stage waits forever on a job already done.</p>
+    <p><code>settle</code> does not poll status. It tracks Herdr's per-agent state-change sequence number and runs a two-state machine. An agent whose baseline is already <code>working</code> is <em>active</em>: the next settled status is unambiguously real. An agent whose baseline is anything else is <em>unconfirmed</em>, and only a movement in the sequence number proves a transition happened. The sequence moves even when the working moment itself is never sampled, so the fast cycle that hangs the staged shell loop resolves correctly here.</p>
+    <h3>Bounded by construction</h3>
+    <p>The skill already capped blocking calls at roughly 90 seconds, because the harness running these agents kills a longer foreground command and loses its return value. An unbounded settle loop contradicted that cap. <code>settle</code> defaults to a 60-second deadline, and a name still open at the deadline is a normal result — exit 1, naming the agents still running — so the caller simply calls it again. The timeout now lives inside the tool instead of in prose a reader has to reconcile.</p>
+    <p>The poll interval is 2000ms, chosen as roughly a fourfold margin over a live measurement of the race window at 0.523s, recorded in the repository's own baseline fixtures rather than guessed.</p>
+  </div>
+
+  <div class="callout fixed">
+    <span class="head">Verified against the exact race that broke run 2</span>
+<pre>dispatch returned after 4.2s
+herdr-axi settle settletest
+  settletest,done,null
+counts: 1 of 1 settled
+settle blocked for 6.1s</pre>
+    The agent counted to 40 and replied <code>DONE</code>; <code>settle</code> returned only after that. No early return on the not-yet-started <code>idle</code>. The task was short enough to also exercise the fast start-and-finish cycle that hangs the staged shell loop.
+  </div>
+
+  <div class="callout note">
+    <span class="head">And the partial-settle path exercised itself in the benchmark</span>
+    From the Read Test candidate's own friction report: the first <code>settle explorer_x1 explorer_x2 --timeout 90000</code> returned exit 1 with neither agent settled, it re-ran the same command once, and both came back <code>done</code>. Bounded wait, honest partial result, trivially resumable — read correctly by a candidate working only from the skill text.
+  </div>
+</section>
+
+<section class="findings-list">
+  <h2>The three-run arc</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Measure</th><th>Run 1</th><th>Run 2</th><th>Run 3</th></tr></thead>
+      <tbody>
+        <tr><td>Tests won on time, <code>herdr-axi</code></td><td class="num">1 / 3</td><td class="num">3 / 3</td><td class="num win">3 / 3</td></tr>
+        <tr><td>Tests won on tokens, <code>herdr-axi</code></td><td class="num">3 / 3</td><td class="num">1 / 3</td><td class="num win">3 / 3</td></tr>
+        <tr><td>Total task time, <code>herdr</code></td><td class="num">589.4s</td><td class="num">539.0s</td><td class="num">485.2s</td></tr>
+        <tr><td>Total task time, <code>herdr-axi</code></td><td class="num">474.2s</td><td class="num">395.4s</td><td class="num">401.5s</td></tr>
+        <tr><td>Total tokens, <code>herdr</code></td><td class="num">5.54M</td><td class="num">5.27M</td><td class="num">5.45M</td></tr>
+        <tr><td>Total tokens, <code>herdr-axi</code></td><td class="num">4.07M</td><td class="num">6.49M</td><td class="num win">3.66M</td></tr>
+        <tr><td>Calls to task</td><td class="num">26 vs 17</td><td class="num">28 vs 13</td><td class="num">26 vs 17</td></tr>
+        <tr><td>Orphaned panes</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>Fallbacks outside the assigned skill</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="findings">
+    <p>Read the two token rows against each other. The raw-<code>herdr</code> arm sat at 5.54M, 5.27M and 5.45M across three runs with no change to its skill at all — a spread of about 5%, which is this benchmark's noise floor. Over the same three runs the wrapper went 4.07M, then 6.49M, then 3.66M: up 59%, then down 44%.</p>
+    <p>A control that steady is what makes the wrapper's swings readable as signal. Run 2's regression was real and run 3's recovery is real, and neither is the day, the machine, or the model having an off afternoon.</p>
+  </div>
+</section>
+
+<section class="verdict">
+  <h2>Overall</h2>
+  <p>Three runs, nine changes, and the wrapper now wins every measure it is asked about. The path there is worth more than the scoreline: run 1 found a capability gap, run 2 found that closing it in documentation moved the cost rather than removing it, and run 3 found that moving the same logic into a command removed it properly.</p>
+  <p>Each round's regression was narrower than the last, and each was caught by measurement rather than by review. The one finding still fully open belongs to neither wrapper: a blocking call longer than the harness's foreground limit is killed and loses its return value, and the raw-<code>herdr</code> candidate lost a call to it again in the Read Test. That skill is the benchmark's control, so it stays as it is.</p>
+  <div class="verdict-grid">
+    <div class="item"><div class="k">Tests won</div><div class="v">herdr-axi 6 / 6 cells</div></div>
+    <div class="item"><div class="k">Total task time</div><div class="v">485.2s vs 401.5s</div></div>
+    <div class="item"><div class="k">Total tokens</div><div class="v">5.45M vs 3.66M</div></div>
+    <div class="item"><div class="k">Output tokens</div><div class="v">23,604 vs 14,866</div></div>
+    <div class="item"><div class="k">Total calls to task</div><div class="v">26 vs 17</div></div>
+    <div class="item"><div class="k">Fallbacks</div><div class="v">0 vs 0</div></div>
+  </div>
+</section>
+
+<footer>
+  <p>Six candidate runs, each a real Claude Code session on Sonnet 5 at low effort in its own Herdr workspace with its own empty working directory, executed strictly sequentially. Timing comes from five fixed marks each candidate wrote to a file outside its own context; token usage is summed from each candidate's own transcript, filtered to that candidate's session and cut at its final mark. Calls to task are counted from the transcripts, not from the candidates' self-reports. The <code>herdr-axi</code> test suite stands at 160 passing, up from 136 before this round of work.</p>
+  <p>Pre-flight confirmed both skills on <code>master</code> with clean trees, the <code>herdr-axi</code> CLI repo on <code>master</code> with every fix branch merged, the global binary symlinked into that repo so the fixes were live, and <code>herdr-axi doctor</code> reporting <code>status: match</code> against herdr 0.8.0. All eleven workspaces created for this run were closed afterwards and the session verified back at its original six.</p>
+  <p>Two caveats. Both wrapper candidates passed <code>--timeout 90000</code> rather than relying on the 60-second default, so the default's headroom argument is untested here. And the 2000ms poll margin rests on a single live measurement of the race window; a slower machine could push agent pickup past it, at which point <code>settle</code> would wrongly trust its baseline.</p>
+</footer>
+
+</div>
