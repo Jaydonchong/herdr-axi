@@ -26,13 +26,42 @@ JSON) - see `fixtures/BASELINE.md` for the measurement.
 
 ## Installing
 
+Node.js and npm are required. This package has no npm dependencies, so you can run the
+executable directly from the repo without an install:
+
 ```bash
-npm install
-chmod +x herdr-axi
+./herdr-axi --help
 ```
 
-Requires `herdr` on `PATH` for live use. Tests run entirely against fixtures and need no live
-`herdr` session.
+To run `herdr-axi` from any directory, link this checkout into npm's global command directory:
+
+```bash
+cd /path/to/herdr-axi
+npm link
+cd /path/to/another-directory
+herdr-axi --help
+```
+
+`npm link` creates a global package symlink to this checkout and a command symlink for the
+`bin` entry in `package.json`. Edits to this checkout take effect through the links without
+reinstalling. The command belongs to the active Node/npm installation; if you switch Node
+versions with `nvm`, run `npm link` again. Use `command -v herdr-axi` to check which executable
+your shell finds. `npm link` does not publish the package to the npm registry. You do not need
+`npm link herdr-axi` in another project unless that project needs this package as a dependency.
+
+### Why this repo is an npm CLI package
+
+A Git repo is not automatically an npm package. This repo's `package.json` gives npm the package
+name (`herdr-axi`) and version, and maps the `herdr-axi` command to `./herdr-axi` through its
+`bin` field. The target file exists, is executable, and starts with `#!/usr/bin/env node`.
+The `scripts.test` field defines `npm test`. A CLI package does not need a `main` field or
+dependencies, and local linking does not require publication. The name and version become
+required if you publish the package.
+
+Live use requires `herdr` on `PATH` and a running `herdr` server. Run `herdr` in one terminal,
+then `herdr-axi` in another. Run `herdr-axi doctor` to compare the installed `herdr` version
+and API schema against the version this CLI was tested with. Tests run entirely against fixtures
+and need no live `herdr` session.
 
 ## Testing
 
