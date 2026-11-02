@@ -132,7 +132,7 @@ this one observation. SETTLE_POLL_MS (2000ms) is roughly a 4x margin over
 this data point, not a statistically bounded worst case; no repeat runs were
 taken.
 
-## Version values, step 1
+## Version values, first fixture (2026-09-06)
 
 For Phase 4 `doctor` to compare against:
 
@@ -141,3 +141,13 @@ For Phase 4 `doctor` to compare against:
 
 Both are stored in `VERSION.txt`.
 Note that `herdr api schema --json` alone exits 1; the `--output PATH` form is the one that works.
+
+## Current doctor fixture (2026-11-02)
+
+Re-measured after the installed Herdr CLI advanced to 0.8.2. These values are stored in
+`VERSION.txt` and are the compatibility target for `herdr-axi doctor`.
+
+- `herdr --version`: `herdr 0.8.2`
+- `herdr api schema` sha256: `c48f1f54ee0150ca27e11fd44455fe94aeadb20fdf4e4a62393ed822a4e5b150`
+
+The schema was written with `herdr api schema --output PATH` and hashed with `shasum -a 256`.
