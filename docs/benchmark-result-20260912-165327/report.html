@@ -266,7 +266,7 @@ footer p{max-width:72ch;}
 
   <div class="findings">
     <h3>What happened</h3>
-    <p>The <code>herdr-axi</code> candidate finished 157 seconds ahead on a task where both explorers did identical research, and used 41% fewer tokens doing it. Both landed on the same answer: the concept is contained entirely in the <code>internal</code> domain, split into <code>TenantHolidayCalendar</code> and <code>PublicHoliday</code>, with the same models, usecases, apiv2 surface, migrations and tests named by both explorers in both runs.</p>
+    <p>The <code>herdr-axi</code> candidate finished 157 seconds ahead on a task where both explorers did identical research, and used 41% fewer tokens doing it. Both landed on the same answer: the concept is contained entirely in one internal domain, split into <code>TenantHolidayCalendar</code> and <code>PublicHoliday</code>, with the same models, usecases, apiv2 surface, migrations and tests named by both explorers in both runs.</p>
     <p>The raw-<code>herdr</code> candidate lost most of its margin to a harness boundary rather than to Herdr: two of its calls were killed at 120 seconds by the Claude Code Bash tool and backgrounded, costing 241.9 seconds of its 401.8 second read phase. See the tooling findings below.</p>
   </div>
 

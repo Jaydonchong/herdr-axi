@@ -3,7 +3,7 @@ and /herdr-axi, a CLI wrapper optimized for agent use. I want to benchmark the t
 other. Facilitate the benchmark and return a report.
 
 This is the codebase variant of the general benchmark (see benchmark.prompt.md in this same
-folder) with the parameters already filled in.
+folder) with the parameters already filled in for a local repository.
 Revision 3, updated 2026-09-12 from the findings of the 2026-09-12 run.
 Everything in NOISE CONTROLS below exists because it went wrong in a previous run.
 Do not drop one of those controls because it looks like ceremony.
@@ -214,8 +214,8 @@ the evidence that produced it - the command, the timing, and the output.
 Do not report a candidate being slow as a tooling finding.
 
 Prerequisites this variant assumes are available on the machine running it:
-- A git checkout of a target monorepo at <repo-path> (or update the path
-  above if it lives elsewhere).
+- A git checkout of a target monorepo at <repo-path> (or update the paths above if it lives
+  elsewhere).
 - A jaygents checkout at ~/jaygents with the batch-fleet skill and skill-authoring guide present
   at the paths above (or substitute any two documents of comparable length for Analyst A/B if
   unavailable).
