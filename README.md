@@ -63,6 +63,31 @@ then `herdr-axi` in another. Run `herdr-axi doctor` to compare the installed `he
 and API schema against the version this CLI was tested with. Tests run entirely against fixtures
 and need no live `herdr` session.
 
+## Troubleshooting
+
+### `herdr-axi: command not found` after switching Node versions
+
+`npm link` writes its links into the global prefix of the Node installation that was active when
+you ran it. Under `nvm`, every Node version has its own prefix
+(`~/.nvm/versions/node/<version>/`), so both the package symlink in `lib/node_modules` and the
+command symlink in `bin` live inside that one version's directory. `nvm use` changes `PATH` and
+the global prefix, so the new version's `bin` directory does not contain the command, and
+`herdr-axi` appears to have stopped working even though this checkout is unchanged. Running
+`npm link` again after every switch works, but it has to be repeated for each version.
+
+The workaround is to bypass npm's per-version global directory and symlink the executable into
+a directory on `PATH` that does not change with the Node version:
+
+```bash
+mkdir -p ~/.local/bin
+ln -sf /path/to/herdr-axi/herdr-axi ~/.local/bin/herdr-axi
+```
+
+This package has no npm dependencies, so the executable can be linked directly. Its
+`#!/usr/bin/env node` shebang resolves whichever `node` is active at run time. Verify that
+`~/.local/bin` is on `PATH` for each Node version you use, and confirm the shell resolves the
+link with `command -v herdr-axi`.
+
 ## Testing
 
 ```bash
