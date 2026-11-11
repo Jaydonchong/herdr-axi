@@ -26,6 +26,8 @@ usage:
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
   herdr-axi prompt <target> "<text>" [--wait]   send a follow-up message to an existing agent
   herdr-axi pane rename <pane-id> <label>   rename a pane
+  herdr-axi pane send-text <pane-id> "<text>"   send literal text to a pane
+  herdr-axi pane send-keys <pane-id> <key>...   send key presses to a pane
   herdr-axi settle <name>... [--all] [--timeout <ms>]   block until each agent settles, race-safe
   herdr-axi doctor               compare live herdr against the fixture this tool expects
 
@@ -131,6 +133,8 @@ function paneHelp() {
 
 usage:
   herdr-axi pane rename <pane-id> <label>
+  herdr-axi pane send-text <pane-id> "<text>"
+  herdr-axi pane send-keys <pane-id> <key>...
 
 flags:
   --help                         this text
@@ -435,6 +439,33 @@ function parsePaneRenameArgs(argv) {
     const usage = ['usage: herdr-axi pane rename <pane-id> <label>'];
     if (!opts.paneId) usageError('pane rename requires a pane ID', 'missing_pane_id', { help: usage });
     if (!opts.label) usageError('pane rename requires a label', 'missing_pane_label', { help: usage });
+  }
+  return opts;
+}
+
+function parsePaneSendTextArgs(argv) {
+  const opts = parseFlags(argv, [], {
+    positionals: ['paneId', { dest: 'text', freeform: true }],
+    validFlags: ['--help'],
+    allowHelpAsFreeform: true,
+  });
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi pane send-text <pane-id> "<text>"'];
+    if (!opts.paneId) usageError('pane send-text requires a pane ID', 'missing_pane_id', { help: usage });
+    if (!opts.text) usageError('pane send-text requires text', 'missing_text', { help: usage });
+  }
+  return opts;
+}
+
+function parsePaneSendKeysArgs(argv) {
+  const opts = parseFlags(argv, [], {
+    positionals: ['paneId', { dest: 'keys', variadic: true }],
+    validFlags: ['--help'],
+  });
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi pane send-keys <pane-id> <key>...'];
+    if (!opts.paneId) usageError('pane send-keys requires a pane ID', 'missing_pane_id', { help: usage });
+    if (opts.keys.length === 0) usageError('pane send-keys requires at least one key', 'missing_keys', { help: usage });
   }
   return opts;
 }
@@ -836,20 +867,33 @@ async function handlePane(argv) {
     process.stdout.write(paneHelp());
     return;
   }
-  if (argv[0] !== 'rename') {
+  const command = argv[0];
+  if (!['rename', 'send-text', 'send-keys'].includes(command)) {
     usageError(`unknown pane command ${argv[0]}`, 'unknown_pane_command', {
       help: ['Run `herdr-axi pane --help` for pane commands'],
     });
   }
-  const opts = parsePaneRenameArgs(argv.slice(1));
+  const parse = {
+    rename: parsePaneRenameArgs,
+    'send-text': parsePaneSendTextArgs,
+    'send-keys': parsePaneSendKeysArgs,
+  }[command];
+  const opts = parse(argv.slice(1));
   if (opts.help) { process.stdout.write(paneHelp()); return; }
 
   try {
-    herdr.fetchPaneRename(opts.paneId, opts.label);
+    if (command === 'rename') herdr.fetchPaneRename(opts.paneId, opts.label);
+    if (command === 'send-text') herdr.fetchPaneSendText(opts.paneId, opts.text);
+    if (command === 'send-keys') herdr.fetchPaneSendKeys(opts.paneId, opts.keys);
   } catch (err) {
     reportOrRethrow(err);
   }
-  process.stdout.write(`${herdr.toon.serialize({ pane: opts.paneId, label: opts.label })}\n`);
+  const result = command === 'rename'
+    ? { pane: opts.paneId, label: opts.label }
+    : command === 'send-text'
+      ? { pane: opts.paneId, status: 'text sent' }
+      : { pane: opts.paneId, keys: opts.keys, status: 'keys sent' };
+  process.stdout.write(`${herdr.toon.serialize(result)}\n`);
 }
 
 // Resolves --all against the live snapshot: every named live agent, skipping

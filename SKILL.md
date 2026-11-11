@@ -24,6 +24,8 @@ herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>" [--label <text>
 herdr-axi settle <name>... [--all] [--timeout <ms>]       # block until each agent settles, race-safe
 herdr-axi prompt <target> "<text>" [--wait]               # follow-up message to an already-existing agent
 herdr-axi pane rename <pane-id> <label>                    # rename a pane by explicit ID
+herdr-axi pane send-text <pane-id> "<text>"                 # send literal text to a pane by explicit ID
+herdr-axi pane send-keys <pane-id> <key>...                 # send keys to a pane by explicit ID
 herdr-axi doctor                                          # live Herdr version and API schema check
 ```
 
@@ -88,10 +90,16 @@ Without `--wait`, reports `status: "sent, not waited for"` immediately. With `--
 
 `herdr-axi pane rename <pane-id> <label>` renames the pane identified by its explicit pane ID and returns the pane ID and new label. Use the pane ID from the home view or a dispatch result; the command does not infer a focused pane.
 
+## pane input
+
+`herdr-axi pane send-text <pane-id> "<text>"` sends literal text to the pane identified by its explicit pane ID, including unnamed panes.
+`herdr-axi pane send-keys <pane-id> <key>...` sends one or more key presses to that pane; use it to answer an interactive approval or question dialog after inspecting the dialog with `read`.
+Neither command infers a focused pane.
+
 ## doctor
 
 Run when `herdr-axi` output looks wrong or a herdr upgrade is suspected. Exit 1 means the live `herdr` version or API schema no longer matches what this tool was built against - the mismatch is the finding; do not chase output shape further until `doctor` reports a match.
 
 ## Safety
 
-Use explicit pane IDs with `pane rename`. `dispatch` targets the caller's pane unless `--workspace <id>` selects another workspace. Inspect a `blocked` status before responding; do not prompt through a blocked dialog.
+Use explicit pane IDs with `pane rename`, `pane send-text`, and `pane send-keys`. `dispatch` targets the caller's pane unless `--workspace <id>` selects another workspace. Inspect a `blocked` status before responding; use `pane send-keys` for an approval dialog rather than `prompt`.
