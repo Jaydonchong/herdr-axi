@@ -24,6 +24,7 @@ usage:
   herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
   herdr-axi prompt <target> "<text>" [--wait]   send a follow-up message to an existing agent
+  herdr-axi pane rename <pane-id> <label>   rename a pane
   herdr-axi settle <name>... [--all] [--timeout <ms>]   block until each agent settles, race-safe
   herdr-axi doctor               compare live herdr against the fixture this tool expects
 
@@ -118,6 +119,19 @@ usage:
 
 flags:
   --wait                         wait for the agent to settle before reporting
+  --help                         this text
+
+exit: 0 success, 1 error, 2 usage error.
+`;
+}
+
+function paneHelp() {
+  return `herdr-axi pane - pane commands
+
+usage:
+  herdr-axi pane rename <pane-id> <label>
+
+flags:
   --help                         this text
 
 exit: 0 success, 1 error, 2 usage error.
@@ -222,7 +236,7 @@ const POSITIONAL_FLAG_CONFUSION = {
 // the variadic-collection branch below only fires when its index is reached.
 // Required-arg presence checks stay with each wrapper, since which args are
 // required differs per command.
-function parseFlags(argv, spec, { positionals = [], validFlags }) {
+function parseFlags(argv, spec, { positionals = [], validFlags, allowHelpAsFreeform = false }) {
   const out = { help: false };
   for (const d of spec) out[d.dest] = d.default;
   // Normalize to { dest, freeform, variadic }: every existing caller passes
@@ -241,8 +255,11 @@ function parseFlags(argv, spec, { positionals = [], validFlags }) {
   while (i < argv.length) {
     const arg = argv[i];
     // --help/-h wins regardless of what follows it (e.g. a trailing bogus
-    // token), matching the old per-command parsers this replaced.
-    if (arg === '--help' || arg === '-h') {
+    // token), except when a command opts to accept help tokens as freeform
+    // positional values.
+    const nextPositional = posSpecs[positionalValues.length];
+    if ((arg === '--help' || arg === '-h')
+      && !(allowHelpAsFreeform && nextPositional && nextPositional.freeform)) {
       out.help = true;
       posSpecs.forEach(({ dest, variadic }) => { out[dest] = variadic ? [] : null; });
       return out;
@@ -388,6 +405,20 @@ function parsePromptArgs(argv) {
     const usage = ['usage: herdr-axi prompt <target> "<text>"'];
     if (!opts.target) usageError('prompt requires a target', 'missing_target', { help: usage });
     if (!opts.text) usageError('prompt requires text', 'missing_text', { help: usage });
+  }
+  return opts;
+}
+
+function parsePaneRenameArgs(argv) {
+  const opts = parseFlags(argv, [], {
+    positionals: ['paneId', { dest: 'label', freeform: true }],
+    validFlags: ['--help'],
+    allowHelpAsFreeform: true,
+  });
+  if (!opts.help) {
+    const usage = ['usage: herdr-axi pane rename <pane-id> <label>'];
+    if (!opts.paneId) usageError('pane rename requires a pane ID', 'missing_pane_id', { help: usage });
+    if (!opts.label) usageError('pane rename requires a label', 'missing_pane_label', { help: usage });
   }
   return opts;
 }
@@ -784,6 +815,27 @@ async function handlePrompt(argv) {
   process.stdout.write(`${text}\n`);
 }
 
+async function handlePane(argv) {
+  if (argv.length === 0 || (argv.length === 1 && ['--help', '-h'].includes(argv[0]))) {
+    process.stdout.write(paneHelp());
+    return;
+  }
+  if (argv[0] !== 'rename') {
+    usageError(`unknown pane command ${argv[0]}`, 'unknown_pane_command', {
+      help: ['Run `herdr-axi pane --help` for pane commands'],
+    });
+  }
+  const opts = parsePaneRenameArgs(argv.slice(1));
+  if (opts.help) { process.stdout.write(paneHelp()); return; }
+
+  try {
+    herdr.fetchPaneRename(opts.paneId, opts.label);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${herdr.toon.serialize({ pane: opts.paneId, label: opts.label })}\n`);
+}
+
 // Resolves --all against the live snapshot: every named live agent, skipping
 // a nameless one (it has no name to settle "by name"; a caller wanting it
 // explicitly can still pass its pane_id as a positional, same as read/prompt
@@ -879,6 +931,11 @@ async function main() {
 
   if (process.argv[2] === 'prompt') {
     await handlePrompt(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'pane') {
+    await handlePane(process.argv.slice(3));
     return;
   }
 
