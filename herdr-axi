@@ -20,6 +20,7 @@ const HELP = `herdr-axi - token-lean control surface over herdr
 
 usage:
   herdr-axi                      home view: workspaces, agents, counts, attention
+  herdr-axi kinds                list supported agent kinds
   herdr-axi read <target>        agent status + pane content, merged into one call
   herdr-axi dispatch <name> --kind <k> --prompt "<text>"   split, start, prompt, one call
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
@@ -170,6 +171,21 @@ flags:
 
 exit: 0 match, 1 mismatch, 2 usage error.
 `;
+}
+
+function handleKinds(argv) {
+  const opts = parseFlags(argv, [], { validFlags: ['--help'] });
+  if (opts.help) {
+    process.stdout.write('herdr-axi kinds - list supported agent kinds\n\nusage:\n  herdr-axi kinds\n\nflags:\n  --help                         this text\n\nexit: 0 success, 1 error, 2 usage error.\n');
+    return;
+  }
+  let kinds;
+  try {
+    kinds = herdr.fetchAgentKinds();
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${herdr.renderKinds(kinds)}\n`);
 }
 
 let herdr = null;
@@ -946,6 +962,11 @@ async function main() {
 
   if (process.argv[2] === 'doctor') {
     await handleDoctor(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'kinds') {
+    handleKinds(process.argv.slice(3));
     return;
   }
 

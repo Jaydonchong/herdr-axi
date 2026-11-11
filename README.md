@@ -9,6 +9,7 @@ A token-lean **Agent Experience Interface (AXI)** over the `herdr` binary: a sma
 ## Commands
 
 - `herdr-axi` (bare) - the `home` view: workspaces, panes, agents, counts, and an attention line.
+- `herdr-axi kinds` - lists the supported agent kinds for `--kind`.
 - `herdr-axi read <target>` - merges `herdr agent get` (status) and `herdr agent read` (pane text) into one document.
 - `herdr-axi dispatch <name> --kind <k> --prompt <text>` - splits a pane, starts an agent, and prompts it in one call.
 - `herdr-axi pane rename <pane-id> <label>` - renames the specified pane.
