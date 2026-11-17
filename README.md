@@ -13,6 +13,9 @@ A token-lean **Agent Experience Interface (AXI)** over the `herdr` binary: a sma
 - `herdr-axi read <target>` - merges `herdr agent get` (status) and `herdr agent read` (pane text) into one document.
 - `herdr-axi dispatch <name> --kind <k> --prompt <text>` - splits a pane, starts an agent, and prompts it in one call.
 - `herdr-axi pane rename <pane-id> <label>` - renames the specified pane.
+- `herdr-axi pane close <pane-id>` - closes the specified pane.
+- `herdr-axi workspace close <workspace-id>` - closes the specified workspace.
+- `herdr-axi tab close <tab-id>` - closes the specified tab.
 - `herdr-axi doctor` - checks the installed `herdr` version and API schema hash against what this tool was built against.
 
 Run `herdr-axi --help` for the full flag reference.

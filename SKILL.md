@@ -24,6 +24,9 @@ herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>" [--label <text>
 herdr-axi settle <name>... [--all] [--timeout <ms>]       # block until each agent settles, race-safe
 herdr-axi prompt <target> "<text>" [--wait]               # follow-up message to an already-existing agent
 herdr-axi pane rename <pane-id> <label>                    # rename a pane by explicit ID
+herdr-axi pane close <pane-id>                              # close a pane by explicit ID
+herdr-axi workspace close <workspace-id>                   # close a workspace by explicit ID
+herdr-axi tab close <tab-id>                                # close a tab by explicit ID
 herdr-axi pane send-text <pane-id> "<text>"                 # send literal text to a pane by explicit ID
 herdr-axi pane send-keys <pane-id> <key>...                 # send keys to a pane by explicit ID
 herdr-axi doctor                                          # live Herdr version and API schema check

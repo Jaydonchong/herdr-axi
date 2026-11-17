@@ -26,6 +26,9 @@ usage:
   herdr-axi dispatch-workspace <name> --kind <k> --prompt "<text>"   workspace, start, prompt, one call
   herdr-axi prompt <target> "<text>" [--wait]   send a follow-up message to an existing agent
   herdr-axi pane rename <pane-id> <label>   rename a pane
+  herdr-axi pane close <pane-id>   close a pane
+  herdr-axi workspace close <workspace-id>   close a workspace
+  herdr-axi tab close <tab-id>   close a tab
   herdr-axi pane send-text <pane-id> "<text>"   send literal text to a pane
   herdr-axi pane send-keys <pane-id> <key>...   send key presses to a pane
   herdr-axi settle <name>... [--all] [--timeout <ms>]   block until each agent settles, race-safe
@@ -133,6 +136,7 @@ function paneHelp() {
 
 usage:
   herdr-axi pane rename <pane-id> <label>
+  herdr-axi pane close <pane-id>
   herdr-axi pane send-text <pane-id> "<text>"
   herdr-axi pane send-keys <pane-id> <key>...
 
@@ -141,6 +145,18 @@ flags:
 
 exit: 0 success, 1 error, 2 usage error.
 `;
+}
+
+function parseCloseArgs(argv, kind) {
+  const opts = parseFlags(argv, [], { positionals: ['id'], validFlags: ['--help'] });
+  if (!opts.help && !opts.id) usageError(`${kind} close requires a ${kind} ID`, `missing_${kind}_id`, {
+    help: [`usage: herdr-axi ${kind} close <${kind}-id>`],
+  });
+  return opts;
+}
+
+function closeHelp(kind) {
+  return `herdr-axi ${kind} close <${kind}-id> - close the specified ${kind}\n\nusage:\n  herdr-axi ${kind} close <${kind}-id>\n\nflags:\n  --help                         this text\n\nexit: 0 success, 1 error, 2 usage error.\n`;
 }
 
 const SETTLE_FLAGS = ['--all', '--timeout', '--help'];
@@ -868,7 +884,7 @@ async function handlePane(argv) {
     return;
   }
   const command = argv[0];
-  if (!['rename', 'send-text', 'send-keys'].includes(command)) {
+  if (!['rename', 'send-text', 'send-keys', 'close'].includes(command)) {
     usageError(`unknown pane command ${argv[0]}`, 'unknown_pane_command', {
       help: ['Run `herdr-axi pane --help` for pane commands'],
     });
@@ -877,6 +893,7 @@ async function handlePane(argv) {
     rename: parsePaneRenameArgs,
     'send-text': parsePaneSendTextArgs,
     'send-keys': parsePaneSendKeysArgs,
+    close: (args) => parseCloseArgs(args, 'pane'),
   }[command];
   const opts = parse(argv.slice(1));
   if (opts.help) { process.stdout.write(paneHelp()); return; }
@@ -885,8 +902,13 @@ async function handlePane(argv) {
     if (command === 'rename') herdr.fetchPaneRename(opts.paneId, opts.label);
     if (command === 'send-text') herdr.fetchPaneSendText(opts.paneId, opts.text);
     if (command === 'send-keys') herdr.fetchPaneSendKeys(opts.paneId, opts.keys);
+    if (command === 'close') herdr.fetchPaneClose(opts.id);
   } catch (err) {
     reportOrRethrow(err);
+  }
+  if (command === 'close') {
+    process.stdout.write(`${herdr.toon.serialize({ pane: opts.id, status: 'closed' })}\n`);
+    return;
   }
   const result = command === 'rename'
     ? { pane: opts.paneId, label: opts.label }
@@ -894,6 +916,26 @@ async function handlePane(argv) {
       ? { pane: opts.paneId, status: 'text sent' }
       : { pane: opts.paneId, keys: opts.keys, status: 'keys sent' };
   process.stdout.write(`${herdr.toon.serialize(result)}\n`);
+}
+
+async function handleClose(kind, argv) {
+  if (argv.length === 0 || (argv.length === 1 && ['--help', '-h'].includes(argv[0]))) {
+    process.stdout.write(closeHelp(kind));
+    return;
+  }
+  const command = argv[0];
+  if (command !== 'close') usageError(`unknown ${kind} command ${command}`, `unknown_${kind}_command`, {
+    help: [`Run \`herdr-axi ${kind} --help\` for ${kind} commands`],
+  });
+  const opts = parseCloseArgs(argv.slice(1), kind);
+  if (opts.help) { process.stdout.write(closeHelp(kind)); return; }
+  try {
+    if (kind === 'workspace') herdr.fetchWorkspaceClose(opts.id);
+    if (kind === 'tab') herdr.fetchTabClose(opts.id);
+  } catch (err) {
+    reportOrRethrow(err);
+  }
+  process.stdout.write(`${herdr.toon.serialize({ [kind]: opts.id, status: 'closed' })}\n`);
 }
 
 // Resolves --all against the live snapshot: every named live agent, skipping
@@ -996,6 +1038,11 @@ async function main() {
 
   if (process.argv[2] === 'pane') {
     await handlePane(process.argv.slice(3));
+    return;
+  }
+
+  if (process.argv[2] === 'workspace' || process.argv[2] === 'tab') {
+    await handleClose(process.argv[2], process.argv.slice(3));
     return;
   }
 
