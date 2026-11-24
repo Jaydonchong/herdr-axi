@@ -3,6 +3,8 @@ description: token-lean control surface over herdr 0.8.0
 session: default
 focused: "w6:p5"
 cwd: ~/repo-a
+caller_pane: unset
+caller_pane_status: unset
 workspaces[12]{id,label,tabs,panes}:
   w6,xi37,1,1
   w9,omicron38,1,1
@@ -16,6 +18,25 @@ workspaces[12]{id,label,tabs,panes}:
   wX,psi46,1,1
   wY,omega47,2,2
   w0,alpha48,1,1
+panes[18]{pane,workspace,tab,focused,cwd,agent,status}:
+  "w6:p5",w6,"w6:t1",true,~/repo-a,"w6:p5",working
+  "w9:pA",w9,"w9:t1",false,~/repo-b,"w9:pA",idle
+  "wK:p1",wK,"wK:t1",false,~/dir-a,agent-a,idle
+  "wK:p2",wK,"wK:t1",false,~/dir-a,"wK:p2",idle
+  "wM:p1",wM,"wM:t1",false,~/dir-c,agent-b,done
+  "wN:p1",wN,"wN:t1",false,~/dir-d,agent-c,idle
+  "wQ:p1",wQ,"wQ:t1",false,~/repo-b,"wQ:p1",idle
+  "wQ:p3",wQ,"wQ:t1",false,~/repo-b,agent-d,idle
+  "wQ:p4",wQ,"wQ:t1",false,~/repo-b,agent-e,idle
+  "wQ:p5",wQ,"wQ:t1",false,~/repo-b,agent-f,idle
+  "wQ:p6",wQ,"wQ:t3",false,~/repo-b,"wQ:p6",idle
+  "wS:p1",wS,"wS:t1",false,~/dir-e,agent-g,idle
+  "wV:p1",wV,"wV:t1",false,~/dir-f,agent-h,done
+  "wW:p1",wW,"wW:t1",false,~/dir-g,agent-i,done
+  "wX:p1",wX,"wX:t1",false,~/dir-j,"",""
+  "wY:p1",wY,"wY:t1",false,~/dir-h,"wY:p1",idle
+  "wY:p2",wY,"wY:t2",false,~/dir-h,"",""
+  "w0:p1",w0,"w0:t1",false,~/dir-i,agent-j,working
 agents[18]{name,pane,kind,status,cwd}:
   "w6:p5","w6:p5",claude,working,~/repo-a
   "w9:pA","w9:pA",claude,idle,~/repo-b

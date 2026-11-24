@@ -36,7 +36,7 @@ All output is TOON on stdout. Exit 0 success, 1 error, 2 usage error. Run `herdr
 
 ## home (bare invocation)
 
-One call returns the session's workspaces and live agents, plus an attention scan. Read `agents[]` for `{name,pane,kind,status,cwd}` and the `attention` line for anything blocked or waiting. Use a `name` when present; fall back to `pane` for a nameless row.
+One call returns the session's workspaces, every live pane, and live agents, plus an attention scan. Read `panes[]` for `{pane,workspace,tab,focused,cwd,agent,status}`; `agent` and `status` are empty when the pane has no associated live agent. Read `caller_pane` and `caller_pane_status` to check whether inherited `HERDR_PANE_ID` is `live`, `stale`, or `unset`. Read `agents[]` for `{name,pane,kind,status,cwd}` and the `attention` line for anything blocked or waiting. Use a `name` when present; fall back to `pane` for a nameless row.
 
 ## read <target>
 

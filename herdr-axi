@@ -583,18 +583,19 @@ async function handleRead(argv) {
 // acquirePaneViaWorkspace: { pane, direction }.
 function acquirePaneViaSplit(opts) {
   let direction = opts.direction;
-  if (!direction) {
-    const focusedPaneId = process.env.HERDR_PANE_ID;
-    if (!focusedPaneId) {
-      emitError({
-        error: 'HERDR_PANE_ID is not set; pass --direction explicitly',
-        code: 'missing_pane_id',
-        help: ['Run inside a herdr-managed pane, or pass --direction right|down'],
-      }, 1);
-    }
+  const callerPaneId = process.env.HERDR_PANE_ID;
+  if (!callerPaneId && !direction) {
+    emitError({
+      error: 'HERDR_PANE_ID is not set; pass --direction explicitly',
+      code: 'missing_pane_id',
+      help: ['Run inside a herdr-managed pane, or pass --direction right|down'],
+    }, 1);
+  }
+
+  if (callerPaneId) {
     let layoutEnvelope;
     try {
-      layoutEnvelope = herdr.fetchPaneLayout(focusedPaneId);
+      layoutEnvelope = herdr.fetchPaneLayout(callerPaneId);
     } catch (err) {
       reportOrRethrow(err);
     }
@@ -604,7 +605,7 @@ function acquirePaneViaSplit(opts) {
     } catch (err) {
       reportOrRethrow(err);
     }
-    direction = herdr.chooseDirection(area);
+    if (!direction) direction = herdr.chooseDirection(area);
   }
 
   let splitEnvelope;
@@ -1081,7 +1082,7 @@ async function main() {
 
   let text;
   try {
-    text = herdr.renderHome(envelope, { bin });
+    text = herdr.renderHome(envelope, { bin, callerPaneId: process.env.HERDR_PANE_ID });
   } catch (err) {
     reportOrRethrow(err);
   }
